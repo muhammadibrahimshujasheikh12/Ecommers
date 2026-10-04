@@ -1,6 +1,19 @@
 import "server-only";
 import { cache } from "react";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import {
+  demoCategories,
+  demoCollections,
+  demoFacets,
+  demoProductBySlug,
+  demoProductSlugs,
+  demoProductsByIds,
+  demoProductsBySlugs,
+  demoSearchProducts,
+  demoSearchSuggestions,
+} from "@/lib/demo/catalog";
+import { toCategory, toSummary, type CardRow } from "./catalog-mappers";
 import type {
   CategoryDetail,
   CategorySummary,
@@ -10,12 +23,9 @@ import type {
   ProductFilters,
   ProductPage,
   ProductSummary,
-  Swatch,
-  VariantOption,
 } from "@/types/domain";
 
 export const PAGE_SIZE = 12;
-const NEW_FOR_DAYS = 30;
 
 const CARD_SELECT = `
   id, slug, name, price, compare_at_price, stock_quantity, created_at, rating_avg, rating_count,
@@ -24,85 +34,11 @@ const CARD_SELECT = `
   variants:product_variants ( id, name, sku, size, color, color_hex, price, stock_quantity, position )
 ` as const;
 
-type CardRow = {
-  id: string;
-  slug: string;
-  name: string;
-  price: number;
-  compare_at_price: number | null;
-  stock_quantity: number;
-  created_at: string;
-  rating_avg: number;
-  rating_count: number;
-  category: { name: string; slug: string } | null;
-  images: { url: string; alt_text: string | null; position: number }[];
-  variants: {
-    id: string;
-    name: string;
-    sku: string;
-    size: string | null;
-    color: string | null;
-    color_hex: string | null;
-    price: number | null;
-    stock_quantity: number;
-    position: number;
-  }[];
-};
-
-const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "One Size"];
-const sizeRank = (s: string) => {
-  const i = SIZE_ORDER.indexOf(s);
-  return i === -1 ? 99 : i;
-};
-
-function toSummary(row: CardRow): ProductSummary {
-  const variants: VariantOption[] = [...row.variants]
-    .sort((a, b) => a.position - b.position)
-    .map((v) => ({
-      id: v.id,
-      name: v.name,
-      sku: v.sku,
-      size: v.size,
-      color: v.color,
-      colorHex: v.color_hex,
-      price: Number(v.price ?? row.price),
-      stock: v.stock_quantity,
-    }));
-
-  const colors: Swatch[] = [];
-  for (const v of variants) {
-    if (v.color && !colors.some((c) => c.name === v.color)) colors.push({ name: v.color, hex: v.colorHex });
-  }
-  const sizes = [...new Set(variants.map((v) => v.size).filter((s): s is string => Boolean(s)))].sort(
-    (a, b) => sizeRank(a) - sizeRank(b),
-  );
-  const inStock = variants.length ? variants.some((v) => v.stock > 0) : row.stock_quantity > 0;
-  const ageDays = (Date.now() - new Date(row.created_at).getTime()) / 86_400_000;
-
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    category: row.category,
-    price: Number(row.price),
-    compareAtPrice: row.compare_at_price ? Number(row.compare_at_price) : null,
-    images: [...row.images]
-      .sort((a, b) => a.position - b.position)
-      .map((i) => ({ url: i.url, alt: i.alt_text ?? row.name })),
-    colors,
-    sizes,
-    variants,
-    inStock,
-    isNew: ageDays <= NEW_FOR_DAYS,
-    rating: Number(row.rating_avg),
-    ratingCount: row.rating_count,
-  };
-}
-
 /** Product cards for the given ids, returned in the same order. */
 export async function getProductsByIds(ids: string[]): Promise<ProductSummary[]> {
   const unique = [...new Set(ids)].slice(0, 100);
   if (!unique.length) return [];
+  if (DEMO_MODE) return demoProductsByIds(unique);
   const supabase = createSupabasePublicClient();
   const { data, error } = await supabase
     .from("products")
@@ -115,7 +51,19 @@ export async function getProductsByIds(ids: string[]): Promise<ProductSummary[]>
   return unique.map((id) => byId.get(id)).filter((p): p is ProductSummary => Boolean(p));
 }
 
+/** Product cards for the given slugs (active only), returned in the same order. */
+export async function getProductsBySlugs(slugs: string[]): Promise<ProductSummary[]> {
+  if (!slugs.length) return [];
+  if (DEMO_MODE) return demoProductsBySlugs(slugs);
+  const supabase = createSupabasePublicClient();
+  const { data, error } = await supabase.from("products").select("id, slug").in("slug", slugs).eq("status", "active");
+  if (error) throw new Error(`Failed to load products: ${error.message}`);
+  const idBySlug = new Map(data.map((p) => [p.slug, p.id]));
+  return getProductsByIds(slugs.flatMap((s) => idBySlug.get(s) ?? []));
+}
+
 export async function searchProducts(filters: ProductFilters, pageSize = PAGE_SIZE): Promise<ProductPage> {
+  if (DEMO_MODE) return demoSearchProducts(filters, pageSize);
   const supabase = createSupabasePublicClient({ revalidate: 120 });
   const page = Math.max(1, filters.page);
   const { data, error } = await supabase.rpc("search_products", {
@@ -146,6 +94,7 @@ export async function getFacets(scope: {
   q?: string;
   onSale?: boolean;
 }): Promise<Facets> {
+  if (DEMO_MODE) return demoFacets(scope);
   const supabase = createSupabasePublicClient();
   const { data, error } = await supabase.rpc("catalog_facets", {
     p_category_slugs: scope.categories?.length ? scope.categories : undefined,
@@ -176,6 +125,7 @@ export async function getProductRail(
 }
 
 export const getProductBySlug = cache(async (slug: string): Promise<ProductDetail | null> => {
+  if (DEMO_MODE) return demoProductBySlug(slug);
   const supabase = createSupabasePublicClient();
   const { data, error } = await supabase
     .from("products")
@@ -245,26 +195,8 @@ export async function getRelatedProducts(product: ProductDetail, limit = 4): Pro
 // Categories & collections
 // ---------------------------------------------------------------------------
 
-type CategoryRow = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  image_url: string | null;
-  parent_id: string | null;
-  position: number;
-};
-
-const toCategory = (c: CategoryRow): CategorySummary => ({
-  id: c.id,
-  name: c.name,
-  slug: c.slug,
-  description: c.description,
-  imageUrl: c.image_url,
-  parentId: c.parent_id,
-});
-
 export const getCategories = cache(async (): Promise<CategorySummary[]> => {
+  if (DEMO_MODE) return demoCategories();
   const supabase = createSupabasePublicClient();
   const { data, error } = await supabase
     .from("categories")
@@ -287,6 +219,7 @@ export const getCategoryBySlug = cache(async (slug: string): Promise<CategoryDet
 });
 
 export const getCollections = cache(async (): Promise<CollectionSummary[]> => {
+  if (DEMO_MODE) return demoCollections();
   const supabase = createSupabasePublicClient();
   const { data, error } = await supabase
     .from("collections")
@@ -304,6 +237,7 @@ export async function getCollectionBySlug(slug: string): Promise<CollectionSumma
 
 /** For sitemap.xml */
 export async function getAllProductSlugs(): Promise<{ slug: string; updatedAt: string }[]> {
+  if (DEMO_MODE) return demoProductSlugs();
   const supabase = createSupabasePublicClient({ revalidate: 3600 });
   const { data, error } = await supabase
     .from("products")
@@ -330,6 +264,7 @@ export type SearchSuggestions = {
 };
 
 export async function searchSuggestions(query: string): Promise<SearchSuggestions> {
+  if (DEMO_MODE) return demoSearchSuggestions(query, 6);
   const supabase = createSupabasePublicClient({ revalidate: 60 });
   const { data, error } = await supabase.rpc("search_catalog", { p_query: query, p_limit: 6 });
   if (error) throw new Error(`Search failed: ${error.message}`);

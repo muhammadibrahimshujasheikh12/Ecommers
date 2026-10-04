@@ -10,10 +10,13 @@ import {
   setCouponCookie,
   updateCartItemQuantity,
 } from "@/lib/data/cart";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoLineIdSchema } from "@/lib/demo/cart";
 import { addToCartSchema, couponSchema } from "@/lib/validation/schemas";
 import type { ActionResult, CartView } from "@/types/domain";
 
-const lineIdSchema = z.uuid();
+// Demo-mode bags use short line ids (see src/lib/demo/cart.ts).
+const lineIdSchema = DEMO_MODE ? demoLineIdSchema : z.uuid();
 
 function failure(error: unknown, fallback: string): { ok: false; error: string } {
   if (error instanceof CartError) return { ok: false, error: error.message };

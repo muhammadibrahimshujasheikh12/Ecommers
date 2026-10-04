@@ -24,3 +24,14 @@ export function AuthShell({ eyebrow, title, intro, children, footer }: { eyebrow
     </div>
   );
 }
+
+/** Quiet note above an auth form explaining how sign-in works in the demo store. */
+export function AuthDemoNote({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <aside aria-label="Demo store" className="mb-8 border-l-2 border-charcoal bg-cream px-5 py-4">
+      <p className="font-ui text-[11px] font-medium uppercase tracking-[0.2em] text-ink-3">Demo store</p>
+      <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">{children}</p>
+      {action && <div className="mt-3">{action}</div>}
+    </aside>
+  );
+}

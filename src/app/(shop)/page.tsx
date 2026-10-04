@@ -13,9 +13,8 @@ import {
 } from "@/features/home/sections";
 import { ShopTheLook } from "@/features/home/shop-the-look";
 import { WatchAndShop } from "@/features/home/watch-and-shop";
-import { getProductRail, getProductsByIds } from "@/lib/data/catalog";
+import { getProductRail, getProductsBySlugs } from "@/lib/data/catalog";
 import { getStoreRating } from "@/lib/data/reviews";
-import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { heroSlides, shopTheLook, watchAndShop } from "@/content/home";
 import { buildMetadata } from "@/lib/seo";
 import { site } from "@/content/site";
@@ -31,9 +30,7 @@ export const metadata: Metadata = {
 };
 
 async function productsBySlug(slugs: string[]): Promise<Map<string, ProductSummary>> {
-  const supabase = createSupabasePublicClient();
-  const { data } = await supabase.from("products").select("id, slug").in("slug", slugs).eq("status", "active");
-  const products = await getProductsByIds((data ?? []).map((p) => p.id));
+  const products = await getProductsBySlugs(slugs);
   return new Map(products.map((p) => [p.slug, p]));
 }
 

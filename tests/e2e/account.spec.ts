@@ -69,9 +69,13 @@ test("register → account → address → order → verified review → sign ou
   await page.waitForURL((u) => new URL(u).pathname === "/");
   await page.goto("/login?next=/account/orders");
   await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
-  await page.locator('input[name="password"]').fill("wrong-password1");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByText("The email or password you entered is incorrect.")).toBeVisible();
+  // The demo store (no Supabase project) accepts any password by design.
+  const demoStore = await page.getByRole("complementary", { name: "Demo store" }).isVisible();
+  if (!demoStore) {
+    await page.locator('input[name="password"]').fill("wrong-password1");
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page.getByText("The email or password you entered is incorrect.")).toBeVisible();
+  }
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL((u) => new URL(u).pathname === "/account/orders");

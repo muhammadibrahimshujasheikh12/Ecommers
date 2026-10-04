@@ -12,6 +12,7 @@ import { Checkbox, Input } from "@/components/ui/field";
 import { Alert } from "@/components/ui/misc";
 import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from "@/lib/validation/schemas";
 import { forgotPasswordAction, loginAction, registerAction, resendVerificationAction, resetPasswordAction } from "./actions";
+import { AuthDemoNote } from "./auth-shell";
 
 function applyFieldErrors<T extends FieldValues>(setError: UseFormSetError<T>, fieldErrors?: Record<string, string[] | undefined>) {
   for (const [k, v] of Object.entries(fieldErrors ?? {})) if (v?.[0]) setError(k as Path<T>, { message: v[0] });
@@ -35,10 +36,21 @@ function PasswordInput(props: React.ComponentProps<typeof Input>) {
   );
 }
 
-export function LoginForm({ next }: { next?: string }) {
+/**
+ * `demoEmail` (demo store only) shows how sign-in works there, with a button
+ * that fills in a seeded customer who has order history.
+ */
+export function LoginForm({ next, demoEmail }: { next?: string; demoEmail?: string }) {
   const router = useRouter();
   const [error, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<z.input<typeof loginSchema>>({ resolver: zodResolver(loginSchema) });
+  const { register, handleSubmit, setError, setValue, formState: { errors, isSubmitting } } = useForm<z.input<typeof loginSchema>>({ resolver: zodResolver(loginSchema) });
+
+  const fillDemoAccount = () => {
+    if (!demoEmail) return;
+    setValue("email", demoEmail, { shouldValidate: true });
+    // Any password works in the demo store; this one just fills the field.
+    setValue("password", "demo1234", { shouldValidate: true });
+  };
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -52,19 +64,33 @@ export function LoginForm({ next }: { next?: string }) {
   });
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
-      {error && <Alert tone="error">{error}</Alert>}
-      <Input label="Email" type="email" autoComplete="email" required error={errors.email?.message} {...register("email")} />
-      <PasswordInput label="Password" autoComplete="current-password" required error={errors.password?.message} {...register("password")} />
-      <div className="flex justify-end">
-        <Link href="/forgot-password" className="font-ui text-[13px] text-ink-2 underline underline-offset-4 hover:text-charcoal">
-          Forgot your password?
-        </Link>
-      </div>
-      <Button type="submit" block size="lg" loading={isSubmitting}>
-        Sign in
-      </Button>
-    </form>
+    <>
+      {demoEmail && (
+        <AuthDemoNote
+          action={
+            <button type="button" onClick={fillDemoAccount} className="link-underline ui-label text-[12px] text-charcoal">
+              Use this account
+            </button>
+          }
+        >
+          Sign in with any email and password — nothing is checked or stored. Try <strong className="font-medium text-charcoal">{demoEmail}</strong> to see a
+          customer with order history.
+        </AuthDemoNote>
+      )}
+      <form onSubmit={onSubmit} noValidate className="space-y-5">
+        {error && <Alert tone="error">{error}</Alert>}
+        <Input label="Email" type="email" autoComplete="email" required error={errors.email?.message} {...register("email")} />
+        <PasswordInput label="Password" autoComplete="current-password" required error={errors.password?.message} {...register("password")} />
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="font-ui text-[13px] text-ink-2 underline underline-offset-4 hover:text-charcoal">
+            Forgot your password?
+          </Link>
+        </div>
+        <Button type="submit" block size="lg" loading={isSubmitting}>
+          Sign in
+        </Button>
+      </form>
+    </>
   );
 }
 

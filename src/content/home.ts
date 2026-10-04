@@ -84,7 +84,7 @@ export const collectionSpotlight = {
   text: "Each Signature piece passes through the hands of our karigars for up to 120 hours — from hand-drawn motifs to zardozi and finishing. Heirlooms, made for now.",
   facts: [
     { value: "120", label: "Hours of handwork" },
-    { value: "24", label: "Limited styles" },
+    { value: "12", label: "Limited styles" },
     { value: "Lahore", label: "Atelier made" },
   ],
   cta: { label: "Explore Collection", href: "/collections/signature" },

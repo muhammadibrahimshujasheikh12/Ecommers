@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import { trackOrder } from "@/lib/data/orders";
 import { newsletterSchema, trackOrderSchema } from "@/lib/validation/schemas";
 import type { ActionResult, OrderDetail } from "@/types/domain";
@@ -12,6 +13,8 @@ export async function subscribeAction(input: unknown): Promise<ActionResult> {
     if (parsed.error.issues.some((i) => i.path[0] === "company")) return { ok: true, data: undefined, message: "Thank you for subscribing." };
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Enter a valid email address." };
   }
+  // Demo store: there is no subscriber list to join and no email service.
+  if (DEMO_MODE) return { ok: true, data: undefined, message: "Thanks! This is a demo store — your email isn’t saved and nothing will be sent." };
   const admin = createSupabaseAdminClient();
   const { data: existing } = await admin
     .from("newsletter_subscribers")

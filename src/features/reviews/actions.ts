@@ -6,6 +6,8 @@ import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/serve
 import { CATALOG_TAG } from "@/lib/supabase/public";
 import { reviewsTag } from "@/lib/data/reviews";
 import { reviewImagesEnabled } from "@/lib/env";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoDeleteReview, demoSubmitReview } from "@/lib/demo/reviews";
 import { REVIEW_IMAGE_LIMIT, REVIEW_IMAGE_MAX_BYTES, REVIEW_IMAGE_TYPES, reviewSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/types/domain";
 
@@ -40,6 +42,16 @@ export async function submitReviewAction(formData: FormData): Promise<ActionResu
   for (const f of files) {
     if (!(REVIEW_IMAGE_TYPES as readonly string[]).includes(f.type)) return { ok: false, error: "Photos must be JPG, PNG or WebP." };
     if (f.size > REVIEW_IMAGE_MAX_BYTES) return { ok: false, error: "Each photo must be 5 MB or smaller." };
+  }
+
+  if (DEMO_MODE) {
+    // Saved in this browser's cookie; photo uploads are disabled in demo mode.
+    const saved = await demoSubmitReview(parsed.data);
+    if (saved.ok) {
+      revalidateTag(reviewsTag(parsed.data.productId), "max");
+      revalidateTag(CATALOG_TAG, "max");
+    }
+    return saved;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -92,6 +104,12 @@ export async function submitReviewAction(formData: FormData): Promise<ActionResu
 export async function deleteReviewAction(reviewId: string, productId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Please sign in." };
+  if (DEMO_MODE) {
+    const removed = await demoDeleteReview(reviewId);
+    revalidateTag(reviewsTag(productId), "max");
+    revalidateTag(CATALOG_TAG, "max");
+    return removed;
+  }
   const supabase = await createSupabaseServerClient();
   const { data: images } = await supabase.from("review_images").select("image_url").eq("review_id", reviewId);
   const { error } = await supabase.from("reviews").delete().eq("id", reviewId).eq("user_id", user.id);

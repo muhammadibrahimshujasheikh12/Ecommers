@@ -4,6 +4,18 @@ import { cookies } from "next/headers";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env.server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import {
+  clearDemoCart,
+  demoAddCartItem,
+  demoCartCount,
+  demoCartItemsForCheckout,
+  demoCartLine,
+  demoRemoveCartItem,
+  demoUpdateCartItemQuantity,
+  readDemoCartItems,
+} from "@/lib/demo/cart";
+import { demoPriceItems } from "@/lib/demo/pricing";
 import type { CartLine, CartView, ShippingOption } from "@/types/domain";
 import type { Json } from "@/types/database";
 
@@ -12,6 +24,7 @@ import type { Json } from "@/types/database";
  * guests are identified by an opaque random id in an httpOnly cookie.
  * Guest carts are only reachable through this server module (service role),
  * so ownership is enforced here — never trust a cart id from the browser.
+ * In demo mode the bag lives in a cookie instead (see src/lib/demo/cart.ts).
  */
 
 export const CART_COOKIE = "aq_cart";
@@ -67,7 +80,7 @@ async function ensureCart(): Promise<CartRef> {
   return data;
 }
 
-type RawItem = { id: string; product_id: string; variant_id: string | null; quantity: number };
+export type RawItem = { id: string; product_id: string; variant_id: string | null; quantity: number };
 
 async function getRawItems(cartId: string): Promise<RawItem[]> {
   const admin = createSupabaseAdminClient();
@@ -80,7 +93,7 @@ async function getRawItems(cartId: string): Promise<RawItem[]> {
   return data;
 }
 
-type CalcResult = {
+export type CalcResult = {
   lines: {
     product_id: string;
     variant_id: string | null;
@@ -113,10 +126,12 @@ type CalcResult = {
     max_days: number;
   }[];
   shipping_method: string | null;
+  shipping_method_name: string | null;
   shipping: number;
   tax: number;
   total: number;
   can_checkout: boolean;
+  errors: { code: CartLine["status"] | "shipping_unavailable"; product_id?: string; variant_id?: string | null; available?: number }[];
 };
 
 export type PricingOptions = {
@@ -131,6 +146,7 @@ export async function priceItems(
   items: { product_id: string; variant_id: string | null; quantity: number }[],
   options: PricingOptions = {},
 ): Promise<CalcResult> {
+  if (DEMO_MODE) return demoPriceItems(items, options);
   const admin = createSupabaseAdminClient();
   const user = await getCurrentUser();
   const { data, error } = await admin.rpc("calculate_cart", {
@@ -163,11 +179,15 @@ const EMPTY_CART: CartView = {
   canCheckout: false,
 };
 
-/** The visitor's cart, fully priced by the database. */
-export async function getCart(options: PricingOptions = {}): Promise<CartView> {
+/** The visitor's cart items, oldest first (none when they have no cart yet). */
+async function getVisitorItems(): Promise<RawItem[]> {
   const cart = await findCart();
-  if (!cart) return EMPTY_CART;
-  const items = await getRawItems(cart.id);
+  return cart ? getRawItems(cart.id) : [];
+}
+
+/** The visitor's cart, fully priced by the database. Only reads cookies, so it is safe while rendering. */
+export async function getCart(options: PricingOptions = {}): Promise<CartView> {
+  const items = DEMO_MODE ? await readDemoCartItems() : await getVisitorItems();
   if (!items.length) return EMPTY_CART;
 
   const couponCode = options.couponCode !== undefined ? options.couponCode : (await cookies()).get(COUPON_COOKIE)?.value;
@@ -223,6 +243,7 @@ export async function getCart(options: PricingOptions = {}): Promise<CartView> {
 
 /** Raw items for order placement (prices are re-derived inside place_order). */
 export async function getCartItemsForCheckout() {
+  if (DEMO_MODE) return demoCartItemsForCheckout();
   const cart = await findCart();
   if (!cart) return { cartId: null, items: [] as Omit<RawItem, "id">[] };
   const items = await getRawItems(cart.id);
@@ -234,6 +255,7 @@ export async function getCartItemsForCheckout() {
 
 /** Cheap count for the header badge. */
 export async function getCartCount(): Promise<number> {
+  if (DEMO_MODE) return demoCartCount();
   const cart = await findCart();
   if (!cart) return 0;
   const admin = createSupabaseAdminClient();
@@ -245,6 +267,7 @@ export class CartError extends Error {}
 
 /** Adds an item, validating the product/variant and capping at available stock. */
 export async function addCartItem(productId: string, variantId: string | null, quantity: number) {
+  if (DEMO_MODE) return demoAddCartItem(productId, variantId, quantity);
   const admin = createSupabaseAdminClient();
   const { data: product } = await admin
     .from("products")
@@ -293,6 +316,7 @@ async function assertOwnLine(lineId: string) {
 }
 
 export async function updateCartItemQuantity(lineId: string, quantity: number) {
+  if (DEMO_MODE) return demoUpdateCartItemQuantity(lineId, quantity);
   const admin = await assertOwnLine(lineId);
   if (quantity <= 0) {
     await admin.from("cart_items").delete().eq("id", lineId);
@@ -306,18 +330,21 @@ export async function updateCartItemQuantity(lineId: string, quantity: number) {
 }
 
 export async function removeCartItem(lineId: string) {
+  if (DEMO_MODE) return demoRemoveCartItem(lineId);
   const admin = await assertOwnLine(lineId);
   const { error } = await admin.from("cart_items").delete().eq("id", lineId);
   if (error) throw new Error(error.message);
 }
 
 export async function getCartLine(lineId: string) {
+  if (DEMO_MODE) return demoCartLine(lineId);
   const admin = await assertOwnLine(lineId);
   const { data } = await admin.from("cart_items").select("product_id, variant_id").eq("id", lineId).single();
   return data;
 }
 
 export async function clearCart(cartId: string) {
+  if (DEMO_MODE) return clearDemoCart();
   const admin = createSupabaseAdminClient();
   await admin.from("cart_items").delete().eq("cart_id", cartId);
   (await cookies()).delete(COUPON_COOKIE);
@@ -331,6 +358,8 @@ export async function setCouponCookie(code: string | null) {
 
 /** After sign-in: move the guest cart's items into the user's cart. */
 export async function mergeGuestCart(userId: string) {
+  // Demo mode keeps one bag per browser, so it simply carries over.
+  if (DEMO_MODE) return;
   const store = await cookies();
   const sid = store.get(CART_COOKIE)?.value;
   if (!isSessionId(sid)) return;

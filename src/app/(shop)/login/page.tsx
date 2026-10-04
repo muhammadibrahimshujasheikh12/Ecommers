@@ -5,11 +5,14 @@ import { AuthShell } from "@/features/auth/auth-shell";
 import { LoginForm } from "@/features/auth/auth-forms";
 import { Alert } from "@/components/ui/misc";
 import { getCurrentUser } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { DEMO_SAMPLE_EMAIL } from "@/lib/demo/account";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({ title: "Sign in", path: "/login", noIndex: true });
 
-const safe = (next: unknown) => (typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : undefined);
+const safe = (next: unknown) =>
+  typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : undefined;
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
@@ -36,7 +39,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           That link is invalid or has expired. Please sign in or request a new link.
         </Alert>
       )}
-      <LoginForm next={next} />
+      <LoginForm next={next} demoEmail={DEMO_MODE ? DEMO_SAMPLE_EMAIL : undefined} />
     </AuthShell>
   );
 }

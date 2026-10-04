@@ -4,6 +4,7 @@ import { BadgeCheck, MessageSquareText } from "lucide-react";
 import { getMyReview, getProductReviews, REVIEWS_PAGE_SIZE, type ReviewSort } from "@/lib/data/reviews";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { reviewImagesEnabled } from "@/lib/env";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import { Stars } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { ReviewForm } from "./review-form";
@@ -117,6 +118,7 @@ export async function ReviewsSection({
               <div className="mt-5">
                 {mine && <p className="mb-4 text-[14px] text-ink-2">You’ve reviewed this product — editing will update your existing review.</p>}
                 <ReviewForm productId={productId} existing={mine} imagesEnabled={reviewImagesEnabled} />
+                {DEMO_MODE && <p className="mt-4 text-[13px] text-ink-3">Demo store — your review is saved in this browser only and isn’t sent for moderation.</p>}
               </div>
             ) : (
               <div className="mt-4">

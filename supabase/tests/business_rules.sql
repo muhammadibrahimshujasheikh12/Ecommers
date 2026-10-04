@@ -130,7 +130,8 @@ end $$;
 select pg_temp.as_anon();
 do $$
 begin
-  assert (select count(*) from public.products) = 24, 'anon should see active products';
+  assert (select count(*) from public.products) > 0, 'anon should see active products';
+  assert not exists (select 1 from public.products where status <> 'active'), 'anon must only see active products';
   assert (select count(*) from public.coupons) = 0, 'anon must not read coupons';
   assert (select count(*) from public.orders) = 0, 'anon must not read orders';
   assert (select count(*) from public.newsletter_subscribers) = 0, 'anon must not read subscribers';

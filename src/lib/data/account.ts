@@ -1,5 +1,7 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoGetAccountStats, demoGetMyAddresses, demoGetProfile } from "@/lib/demo/account";
 import type { Address } from "@/types/domain";
 
 export type Profile = {
@@ -11,6 +13,7 @@ export type Profile = {
 };
 
 export async function getProfile(userId: string, email: string): Promise<Profile> {
+  if (DEMO_MODE) return demoGetProfile(userId, email);
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("profiles")
@@ -54,8 +57,9 @@ export const toAddress = (a: AddressRow): Address => ({
   isDefault: a.is_default,
 });
 
-/** Saved addresses of the signed-in user (RLS-scoped). */
+/** Saved addresses of the signed-in user (RLS-scoped; in demo mode, this browser's address book). */
 export async function getMyAddresses(): Promise<Address[]> {
+  if (DEMO_MODE) return demoGetMyAddresses();
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("addresses")
@@ -67,6 +71,7 @@ export async function getMyAddresses(): Promise<Address[]> {
 }
 
 export async function getAccountStats(userId: string) {
+  if (DEMO_MODE) return demoGetAccountStats(userId);
   const supabase = await createSupabaseServerClient();
   const [orders, wishlist, addresses] = await Promise.all([
     supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", userId),

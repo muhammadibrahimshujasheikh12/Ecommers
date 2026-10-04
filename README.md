@@ -2,6 +2,8 @@
 
 A production-ready e-commerce storefront for a premium Pakistani women's fashion label, built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4** and **Supabase** (Postgres, Auth, Storage).
 
+**No Supabase account yet?** Just run `npm install && npm run dev`. With no Supabase settings the store starts in [demo mode](#demo-mode-no-supabase-needed) with 64 sample products, and every page works.
+
 > **AURAQ** is a placeholder brand name. Brand copy, navigation and contact details live in [`src/content/`](src/content).
 
 The homepage design system and static prototype that this app was built from are in [`design/`](design) — see [`design/README.md`](design/README.md).
@@ -12,17 +14,18 @@ The homepage design system and static prototype that this app was built from are
 
 1. [Features](#features)
 2. [Tech stack](#tech-stack)
-3. [Quick start (local)](#quick-start-local)
-4. [Environment variables](#environment-variables)
-5. [Supabase project setup (hosted)](#supabase-project-setup-hosted)
-6. [Running the store without an admin UI](#running-the-store-without-an-admin-ui)
-7. [Payments](#payments)
-8. [Architecture](#architecture)
-9. [Security model](#security-model)
-10. [Testing](#testing)
-11. [Deployment](#deployment)
-12. [Customisation](#customisation)
-13. [Known limitations](#known-limitations)
+3. [Demo mode (no Supabase needed)](#demo-mode-no-supabase-needed)
+4. [Quick start with Supabase (local)](#quick-start-with-supabase-local)
+5. [Environment variables](#environment-variables)
+6. [Supabase project setup (hosted)](#supabase-project-setup-hosted)
+7. [Running the store without an admin UI](#running-the-store-without-an-admin-ui)
+8. [Payments](#payments)
+9. [Architecture](#architecture)
+10. [Security model](#security-model)
+11. [Testing](#testing)
+12. [Deployment](#deployment)
+13. [Customisation](#customisation)
+14. [Known limitations](#known-limitations)
 
 ---
 
@@ -61,7 +64,28 @@ The homepage design system and static prototype that this app was built from are
 | Icons | Lucide |
 | Tests | Playwright end-to-end, SQL business-rule tests |
 
-## Quick start (local)
+## Demo mode (no Supabase needed)
+
+```bash
+npm install
+npm run dev                # http://localhost:3000
+```
+
+When `NEXT_PUBLIC_SUPABASE_URL` is not set, or `NEXT_PUBLIC_DEMO_MODE=true`, the store runs entirely on the bundled sample catalogue in [`src/lib/demo/dataset.json`](src/lib/demo/dataset.json). It is generated from the same source as the database seed, so the demo and a real Supabase project show the same products.
+
+What works in demo mode:
+- **Catalogue:** 64 products across every category and collection, with search, filters, sorting, product pages, reviews, compare and wishlist.
+- **Bag and checkout:** server-side pricing with coupons and shipping. Cash-on-delivery orders get a confirmation page and can be tracked at `/track-order`. A notice explains that no real order or payment is made.
+- **Accounts:** sign in with **any email and password**; nothing is checked or stored. Sign in as `hira.a@example.com` to see a customer with order history. The profile, address book, wishlist and reviews all work.
+- **Policy pages:** FAQs and the policy pages.
+
+**How it works:** catalogue data is read-only. Each visitor's bag, demo account, addresses, orders, wishlist and reviews are kept in small httpOnly cookies in their own browser. So it works on any host (including Vercel) without a database, and nothing is shared between visitors. Older demo orders roll off once the cookie is full (about the last 2–3 orders). Stock never runs down. Review photos and emails are off.
+
+**Deploy a demo:** import the repo into Vercel and deploy with no environment variables. Set `NEXT_PUBLIC_SITE_URL` to the deployed URL for correct canonical links.
+
+**Switch to a real store:** create a Supabase project, set the variables below and redeploy. Demo mode switches off by itself.
+
+## Quick start with Supabase (local)
 
 Requirements: Node ≥ 20.9, Docker, and the [Supabase CLI](https://supabase.com/docs/guides/cli).
 
@@ -85,14 +109,14 @@ npm run dev                # http://localhost:3000
 
 Local auth emails (password reset, email change) are caught by the local mail viewer at http://localhost:54324. Email confirmation is **off** locally, so sign-up signs you straight in. Turn it on for hosted projects (see below).
 
-**Demo data:** the seed adds 24 products across categories and collections, shipping methods, policy pages, sample reviews and orders, and two coupons:
+**Demo data:** the seed adds 64 products across categories and collections, shipping methods, policy pages, 73 sample reviews and orders, and two coupons (these also work in demo mode):
 
 | Code | Rule |
 | --- | --- |
 | `WELCOME10` | 10% off orders over Rs. 5,000 (max Rs. 3,000), once per customer |
 | `FESTIVE1500` | Rs. 1,500 off orders over Rs. 15,000, until 31 Dec 2026 |
 
-The seeded demo customers have no password and cannot sign in. Register a new account to try the account area. Seeded order `AQ-100001` can be tracked at `/track-order` with `hira.a@example.com`.
+With Supabase, the seeded demo customers have no password and cannot sign in, so register a new account to try the account area. In both modes, seeded order `AQ-100001` can be tracked at `/track-order` with `hira.a@example.com`.
 
 ## Environment variables
 
@@ -100,9 +124,10 @@ See [`.env.example`](.env.example).
 
 | Variable | Scope | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | public | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_URL` | public | Supabase project URL. Leave it unset to run in demo mode. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | public | Anon / publishable key. All access through it is limited by RLS. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **server only** | Used by server code for pricing, checkout, guest order lookup and the newsletter. Never prefix it with `NEXT_PUBLIC_`. |
+| `NEXT_PUBLIC_DEMO_MODE` | public | `true` forces demo mode even when Supabase is configured. NEXT_PUBLIC values are fixed at build time, so rebuild after changing it. |
 | `NEXT_PUBLIC_SITE_URL` | public | Canonical origin for metadata, the sitemap and auth email redirects |
 | `PAYMENT_METHODS` | server | Comma-separated payment methods offered at checkout: `cod`, `bank_transfer` |
 | `BANK_TRANSFER_ACCOUNT_TITLE`, `BANK_TRANSFER_BANK_NAME`, `BANK_TRANSFER_IBAN` | server | Bank transfer is offered only when an IBAN is set |
@@ -290,6 +315,7 @@ The app deploys to **Vercel** (or any Node host that runs `next start`):
 
 ## Known limitations
 
+- **Demo mode** is meant for previews. State lives in each visitor's cookies, stock is never reduced, and older demo orders roll off. Connect Supabase for a real store.
 - **No admin dashboard.** Use the Supabase dashboard (see above). Admin permissions are already enforced in the database.
 - **No transactional order emails.** Supabase Auth sends account emails only; there are no order confirmation or shipping emails. Add them with a provider (Resend, Postmark, …), called from `placeOrderAction` and from an order-status webhook.
 - **No online card or wallet gateway** is bundled. Only COD and bank transfer are built in; see [Payments](#payments).

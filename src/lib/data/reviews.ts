@@ -2,6 +2,8 @@ import "server-only";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoGetMyReview, demoGetProductReviews, demoGetReviewSummary, demoGetStoreRating } from "@/lib/demo/reviews";
 import type { Review, ReviewSummary } from "@/types/domain";
 
 export const REVIEWS_PAGE_SIZE = 6;
@@ -45,6 +47,7 @@ export async function getProductReviews(
   productId: string,
   { page = 1, sort = "recent" }: { page?: number; sort?: ReviewSort } = {},
 ): Promise<{ reviews: Review[]; total: number }> {
+  if (DEMO_MODE) return demoGetProductReviews(productId, { page, sort, pageSize: REVIEWS_PAGE_SIZE });
   const supabase = createSupabasePublicClient({ revalidate: 300, tags: [reviewsTag(productId)] });
   let query = supabase
     .from("reviews")
@@ -64,6 +67,7 @@ export async function getProductReviews(
 }
 
 export async function getReviewSummary(productId: string): Promise<ReviewSummary> {
+  if (DEMO_MODE) return demoGetReviewSummary(productId);
   const supabase = createSupabasePublicClient({ revalidate: 300, tags: [reviewsTag(productId)] });
   const { data, error } = await supabase
     .from("reviews")
@@ -81,6 +85,7 @@ export async function getReviewSummary(productId: string): Promise<ReviewSummary
 
 /** The signed-in user's own review of a product (any status), for editing. */
 export async function getMyReview(productId: string): Promise<Review | null> {
+  if (DEMO_MODE) return demoGetMyReview(productId);
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return null;
@@ -96,6 +101,7 @@ export async function getMyReview(productId: string): Promise<Review | null> {
 
 /** Store-wide rating for the homepage. */
 export async function getStoreRating(): Promise<{ average: number; count: number; recent: (Review & { productName: string; productSlug: string })[] }> {
+  if (DEMO_MODE) return demoGetStoreRating();
   const supabase = createSupabasePublicClient({ revalidate: 900 });
   const [{ data: all }, { data: recent }] = await Promise.all([
     supabase.from("reviews").select("rating").eq("status", "approved").limit(10000),

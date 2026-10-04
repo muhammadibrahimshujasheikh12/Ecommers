@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AuthShell } from "@/features/auth/auth-shell";
+import { AuthDemoNote, AuthShell } from "@/features/auth/auth-shell";
 import { ForgotPasswordForm } from "@/features/auth/auth-forms";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({ title: "Forgot password", path: "/forgot-password", noIndex: true });
@@ -18,6 +19,7 @@ export default function ForgotPasswordPage() {
         </Link>
       }
     >
+      {DEMO_MODE && <AuthDemoNote>No email is sent in the demo store, and none is needed: you can sign in with any email and password.</AuthDemoNote>}
       <ForgotPasswordForm />
     </AuthShell>
   );

@@ -3,11 +3,12 @@
 // Replace with real campaign/product photography before launch — upload
 // product shots to the Supabase "product-images" bucket and update URLs.
 //
-//   npm run images:generate
+//   npm run images:generate              # renders only images that are missing
+//   npm run images:generate -- --force   # re-renders everything
 //
 // (Set PLAYWRIGHT_CHROMIUM to a Chromium binary if one is not bundled.)
 
-import { mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { categories, collections, products } from "./catalog.mjs";
@@ -15,8 +16,7 @@ import { categories, collections, products } from "./catalog.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const out = (p) => path.join(root, "public/images", p);
 const mediaJs = readFileSync(path.join(root, "design/prototype/js/media.js"), "utf8");
-
-const { chromium } = await import("@playwright/test");
+const force = process.argv.includes("--force");
 
 const mix = (hex, amt) => {
   const n = parseInt(hex.slice(1, 7), 16);
@@ -35,9 +35,13 @@ for (const p of products) {
   const a = p.art;
   if (a.flatlay) {
     job(`products/${p.slug}-1.jpg`, 900, 1200, { kind: "flatlay", bg: a.bg, fabrics: a.fabrics });
-    job(`products/${p.slug}-2.jpg`, 900, 1200, { kind: "figure", bg: a.bg, garment: a.fabrics[0], trouser: a.fabrics[1], accent: "#C8A86A" });
+    job(`products/${p.slug}-2.jpg`, 900, 1200, { kind: "figure", bg: a.bg, garment: a.fabrics[0], trouser: a.fabrics[1], accent: "#C8A86A", skin: a.skin });
   } else {
-    const fig = { kind: "figure", bg: a.bg, garment: a.garment, trouser: a.short ? a.garment : mix(a.garment, 0.35), accent: a.accent, long: a.long, short: a.short };
+    // trouser / dupatta / skin are optional overrides; media.js supplies the defaults.
+    const fig = {
+      kind: "figure", bg: a.bg, garment: a.garment, trouser: a.trouser ?? (a.short ? a.garment : mix(a.garment, 0.35)),
+      accent: a.accent, long: a.long, short: a.short, dupatta: a.dupatta, skin: a.skin,
+    };
     job(`products/${p.slug}-1.jpg`, 900, 1200, fig);
     job(`products/${p.slug}-2.jpg`, 900, 1200, p.unstitched
       ? { kind: "flatlay", bg: a.bg, fabrics: [a.garment, mix(a.garment, 0.3), a.accent] }
@@ -112,11 +116,21 @@ galleryArt.forEach((art, i) => job(`gallery/edit-${i + 1}.jpg`, 900, 1200, art))
 job("og-default.jpg", 1200, 630, heroes.festive, { align: "right" });
 
 // ---------------------------------------------------------------------------
+// Existing files are kept byte-for-byte unless --force is passed.
+const pending = force ? jobs : jobs.filter((j) => !existsSync(out(j.file)));
+const iconFiles = [path.join(root, "src/app/icon.png"), path.join(root, "public/images/logo-mark.png")];
+const renderIcon = force || iconFiles.some((f) => !existsSync(f));
+if (!pending.length && !renderIcon) {
+  console.log(`All ${jobs.length} images already exist (use --force to re-render)`);
+  process.exit(0);
+}
+
+const { chromium } = await import("@playwright/test");
 const browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {});
 const page = await browser.newPage();
 await page.setContent(`<html><body style="margin:0"><script>${mediaJs}</script><div id="s"></div></body></html>`);
 
-for (const j of jobs) {
+for (const j of pending) {
   mkdirSync(path.dirname(out(j.file)), { recursive: true });
   await page.setViewportSize({ width: j.w, height: j.h });
   await page.evaluate(({ art, opts, w, h }) => {
@@ -131,12 +145,13 @@ for (const j of jobs) {
 }
 
 // Brand icon (monogram)
-const fontPath = path.join(root, "src/app/fonts/bodoni-moda-latin-standard-normal.woff2");
-await page.setViewportSize({ width: 512, height: 512 });
-await page.setContent(`<html><head><style>@font-face{font-family:B;src:url(data:font/woff2;base64,${readFileSync(fontPath).toString("base64")})}body{margin:0}</style></head><body><div id="i" style="width:512px;height:512px;background:#2A2826;color:#FBF8F3;display:grid;place-items:center;font:400 330px/1 B"><span style="margin-top:-20px">A</span></div></body></html>`);
-await page.waitForTimeout(300);
-await page.locator("#i").screenshot({ path: path.join(root, "src/app/icon.png") });
-await page.locator("#i").screenshot({ path: path.join(root, "public/images/logo-mark.png") });
+if (renderIcon) {
+  const fontPath = path.join(root, "src/app/fonts/bodoni-moda-latin-standard-normal.woff2");
+  await page.setViewportSize({ width: 512, height: 512 });
+  await page.setContent(`<html><head><style>@font-face{font-family:B;src:url(data:font/woff2;base64,${readFileSync(fontPath).toString("base64")})}body{margin:0}</style></head><body><div id="i" style="width:512px;height:512px;background:#2A2826;color:#FBF8F3;display:grid;place-items:center;font:400 330px/1 B"><span style="margin-top:-20px">A</span></div></body></html>`);
+  await page.waitForTimeout(300);
+  for (const file of iconFiles) await page.locator("#i").screenshot({ path: file });
+}
 
 await browser.close();
-console.log(`Rendered ${jobs.length} images + icon`);
+console.log(`Rendered ${pending.length} of ${jobs.length} images${renderIcon ? " + icon" : ""} (${jobs.length - pending.length} already existed)`);

@@ -5,6 +5,9 @@ import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/serve
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { mergeGuestCart } from "@/lib/data/cart";
 import { siteUrl } from "@/lib/env";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { DEMO_PASSWORD_NOTE, demoRegister, demoSignIn } from "@/lib/demo/account";
+import { signOutDemoUser } from "@/lib/demo/session";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -32,6 +35,13 @@ export async function loginAction(input: unknown, next?: string): Promise<Action
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrors(parsed.error.issues) };
 
+  if (DEMO_MODE) {
+    // Any email and password signs in; nothing is checked or stored.
+    const user = await demoSignIn(parsed.data.email);
+    await mergeGuestCart(user.id).catch((e) => console.error("Cart merge failed", e));
+    return { ok: true, data: { redirectTo: await safeNext(next) } };
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error || !data.user) {
@@ -54,6 +64,14 @@ export async function registerAction(input: unknown): Promise<ActionResult<{ nee
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrors(parsed.error.issues) };
   const { email, password, firstName, lastName, marketing } = parsed.data;
+
+  if (DEMO_MODE) {
+    // No verification email or newsletter opt-in in the demo store: sign in straight away.
+    const res = await demoRegister({ email, firstName, lastName });
+    if (!res.ok) return res;
+    await mergeGuestCart(res.data.id).catch(() => undefined);
+    return { ok: true, data: { needsVerification: false, redirectTo: "/account" } };
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({
@@ -87,6 +105,9 @@ export async function registerAction(input: unknown): Promise<ActionResult<{ nee
 export async function forgotPasswordAction(input: unknown): Promise<ActionResult> {
   const parsed = forgotPasswordSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Enter a valid email address.", fieldErrors: fieldErrors(parsed.error.issues) };
+  if (DEMO_MODE) {
+    return { ok: true, data: undefined, message: "Demo store — no email is sent. You can sign in with any email and password." };
+  }
   const supabase = await createSupabaseServerClient();
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${siteUrl}/auth/confirm?next=/reset-password`,
@@ -100,6 +121,7 @@ export async function resetPasswordAction(input: unknown): Promise<ActionResult<
   if (!parsed.success) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrors(parsed.error.issues) };
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Your reset link has expired. Please request a new one." };
+  if (DEMO_MODE) return { ok: true, data: { redirectTo: "/account" }, message: DEMO_PASSWORD_NOTE };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
@@ -113,6 +135,7 @@ export async function changePasswordAction(input: unknown): Promise<ActionResult
   if (!parsed.success) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrors(parsed.error.issues) };
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Please sign in again." };
+  if (DEMO_MODE) return { ok: true, data: undefined, message: DEMO_PASSWORD_NOTE };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
@@ -122,6 +145,10 @@ export async function changePasswordAction(input: unknown): Promise<ActionResult
 }
 
 export async function logoutAction(): Promise<void> {
+  if (DEMO_MODE) {
+    await signOutDemoUser();
+    redirect("/");
+  }
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
@@ -130,6 +157,7 @@ export async function logoutAction(): Promise<void> {
 export async function resendVerificationAction(email: string): Promise<ActionResult> {
   const parsed = forgotPasswordSchema.safeParse({ email });
   if (!parsed.success) return { ok: false, error: "Enter a valid email address." };
+  if (DEMO_MODE) return { ok: true, data: undefined, message: "Demo store — no email is sent." };
   const supabase = await createSupabaseServerClient();
   await supabase.auth.resend({ type: "signup", email: parsed.data.email, options: { emailRedirectTo: `${siteUrl}/auth/confirm?next=/account` } });
   return { ok: true, data: undefined, message: "We've sent a new verification link." };

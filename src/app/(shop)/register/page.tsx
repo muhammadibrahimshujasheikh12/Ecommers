@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/features/auth/auth-shell";
+import { AuthDemoNote, AuthShell } from "@/features/auth/auth-shell";
 import { RegisterForm } from "@/features/auth/auth-forms";
 import { getCurrentUser } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({ title: "Create an account", path: "/register", noIndex: true });
@@ -27,6 +28,9 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
         </>
       }
     >
+      {DEMO_MODE && (
+        <AuthDemoNote>Your account is created instantly in this browser. No email is sent and passwords aren’t stored.</AuthDemoNote>
+      )}
       <RegisterForm defaultEmail={email} />
     </AuthShell>
   );

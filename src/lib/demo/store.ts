@@ -89,6 +89,9 @@ export type DemoAddress = z.infer<typeof demoAddressSchema>;
 
 const addressBookSchema = z.object({ userId: z.string(), items: z.array(demoAddressSchema) });
 
+/** The address book shares one small cookie, so keep it to a handful. */
+export const DEMO_MAX_ADDRESSES = 6;
+
 export async function readDemoAddresses(): Promise<DemoAddress[]> {
   const user = await getDemoUser();
   if (!user) return [];

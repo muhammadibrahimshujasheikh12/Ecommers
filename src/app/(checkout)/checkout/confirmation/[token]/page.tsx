@@ -7,6 +7,7 @@ import { OrderBreakdown, StatusPill } from "@/features/orders/order-view";
 import { getOrderByAccessToken } from "@/lib/data/orders";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { getPaymentProvider } from "@/lib/payments/registry";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import { formatDate } from "@/utils/format";
 
 export const metadata: Metadata = { title: "Order confirmed", robots: { index: false, follow: false } };
@@ -17,8 +18,10 @@ export default async function ConfirmationPage({ params }: PageProps<"/checkout/
   if (!order) notFound();
 
   const provider = getPaymentProvider(order.paymentMethod);
-  const instructions =
-    provider?.instructions?.({ id: order.id, orderNumber: order.orderNumber, accessToken: token, total: order.total, currency: order.currency, email: order.email }) ?? [];
+  // Demo orders are samples: never ask anyone to pay for them.
+  const instructions = DEMO_MODE
+    ? []
+    : (provider?.instructions?.({ id: order.id, orderNumber: order.orderNumber, accessToken: token, total: order.total, currency: order.currency, email: order.email }) ?? []);
 
   return (
     <div className="container-site py-12 md:py-16">
@@ -32,6 +35,9 @@ export default async function ConfirmationPage({ params }: PageProps<"/checkout/
         <div className="mt-4 flex justify-center">
           <StatusPill status={order.status} />
         </div>
+        {DEMO_MODE && (
+          <Alert className="mt-8">Demo store — this is a sample order saved in this browser only. No payment is due, nothing will be shipped and no email has been sent.</Alert>
+        )}
         {instructions.length > 0 && (
           <Alert tone="info" className="mt-8 text-left">
             <p className="mb-2 font-ui text-[12px] font-medium uppercase tracking-[0.14em]">{provider?.label}</p>

@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { Check, ChevronDown, Lock, Pencil } from "lucide-react";
 import { checkoutSchema, COUNTRIES } from "@/lib/validation/schemas";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Textarea } from "@/components/ui/field";
 import { Alert } from "@/components/ui/misc";
@@ -500,6 +501,9 @@ export function CheckoutFlow({ initialCart, user, addresses, paymentOptions }: P
               </Button>
             </div>
             {!quote.canCheckout && <p className="mt-3 text-[13px] text-sale">Some items are unavailable. Please review your bag before placing the order.</p>}
+            {DEMO_MODE && (
+              <p className="mt-4 text-[13px] text-ink-3">Demo store — this saves a sample order in your browser only. No payment is taken and nothing is shipped.</p>
+            )}
           </section>
         </form>
       </div>

@@ -8,6 +8,8 @@ import { StatusPill } from "@/features/orders/order-view";
 import { getAccountStats } from "@/lib/data/account";
 import { getMyOrders } from "@/lib/data/orders";
 import { getCurrentUser } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { DEMO_PASSWORD_NOTE } from "@/lib/demo/account";
 import { formatDate, formatPrice } from "@/utils/format";
 
 export const metadata: Metadata = { title: "My Account", robots: { index: false } };
@@ -26,7 +28,7 @@ export default async function AccountOverviewPage({ searchParams }: PageProps<"/
   return (
     <div className="space-y-12">
       <h1 className="sr-only">Account overview</h1>
-      {params.password === "updated" && <Alert tone="success">Your password has been updated.</Alert>}
+      {params.password === "updated" && <Alert tone="success">{DEMO_MODE ? DEMO_PASSWORD_NOTE : "Your password has been updated."}</Alert>}
       <ul className="grid gap-4 sm:grid-cols-3">
         {cards.map(({ label, value, href, icon: Icon }) => (
           <li key={label}>

@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { z } from "zod";
-import type { DemoCookieName } from "./constants";
+import { DEMO_COOKIES, type DemoCookieName } from "./constants";
 
 /*
  * Demo-mode visitor state is kept in httpOnly cookies as base64url JSON, so it
@@ -9,8 +9,18 @@ import type { DemoCookieName } from "./constants";
  * are always re-validated on read — a cookie is user-controlled input.
  */
 
-/** Stay safely under the ~4 KB per-cookie browser limit. */
-const MAX_COOKIE_BYTES = 3800;
+/**
+ * Encoded size budget per cookie. Each stays under the ~4 KB browser limit and
+ * together they stay well under Node's 16 KB request-header limit (HTTP 431).
+ */
+const BUDGETS: Record<DemoCookieName, number> = {
+  [DEMO_COOKIES.user]: 800,
+  [DEMO_COOKIES.cart]: 2400,
+  [DEMO_COOKIES.addresses]: 2400,
+  [DEMO_COOKIES.orders]: 3600,
+  [DEMO_COOKIES.wishlist]: 1500,
+  [DEMO_COOKIES.reviews]: 1800,
+};
 
 const cookieOptions = {
   httpOnly: true,
@@ -22,6 +32,11 @@ const cookieOptions = {
 
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
 const decode = (raw: string): unknown => JSON.parse(Buffer.from(raw, "base64url").toString("utf8"));
+
+/** Whether a value fits in the named cookie's budget. */
+export function fitsDemoCookie(name: DemoCookieName, value: unknown): boolean {
+  return encode(value).length <= BUDGETS[name];
+}
 
 /** Reads and validates a demo cookie. Missing or malformed values return the fallback. */
 export async function readDemoCookie<T>(name: DemoCookieName, schema: z.ZodType<T>, fallback: T): Promise<T> {
@@ -40,9 +55,8 @@ export async function readDemoCookie<T>(name: DemoCookieName, schema: z.ZodType<
  * Returns false (writing nothing) if the value would exceed the cookie size limit.
  */
 export async function writeDemoCookie(name: DemoCookieName, value: unknown): Promise<boolean> {
-  const encoded = encode(value);
-  if (encoded.length > MAX_COOKIE_BYTES) return false;
-  (await cookies()).set(name, encoded, cookieOptions);
+  if (!fitsDemoCookie(name, value)) return false;
+  (await cookies()).set(name, encode(value), cookieOptions);
   return true;
 }
 
@@ -56,7 +70,7 @@ export async function writeDemoList<T>(
   wrap: (items: T[]) => unknown = (kept) => kept,
 ): Promise<T[]> {
   const kept = [...items];
-  while (kept.length && encode(wrap(kept)).length > MAX_COOKIE_BYTES) kept.pop();
+  while (kept.length && !fitsDemoCookie(name, wrap(kept))) kept.pop();
   await writeDemoCookie(name, wrap(kept));
   return kept;
 }

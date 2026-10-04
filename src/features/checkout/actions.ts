@@ -1,12 +1,17 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import type { User } from "@supabase/supabase-js";
+import type { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/server";
 import { CATALOG_TAG } from "@/lib/supabase/public";
 import { clearCart, getCartItemsForCheckout } from "@/lib/data/cart";
 import { serverEnv } from "@/lib/env.server";
 import { getPaymentProvider } from "@/lib/payments/registry";
+import type { PaymentProvider } from "@/lib/payments/types";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { findDemoOrderAddress, placeDemoOrder, saveDemoOrderAddress } from "@/lib/demo/orders";
 import { checkoutSchema, type AddressInput } from "@/lib/validation/schemas";
 import type { ActionResult, OrderAddress } from "@/types/domain";
 import type { Database, Json } from "@/types/database";
@@ -53,6 +58,8 @@ function friendlyOrderError(message: string, detail?: string): string {
       return "Your bag is empty.";
     case "INVALID_EMAIL":
       return "Please enter a valid email address.";
+    case "DEMO_ORDER_TOO_LARGE":
+      return "This demo order is too large to keep in your browser. Remove an item or shorten your notes, then try again.";
     default:
       return "We couldn't place your order. Please try again.";
   }
@@ -72,6 +79,7 @@ export async function placeOrderAction(input: unknown): Promise<ActionResult<{ r
 
   const provider = getPaymentProvider(data.paymentMethod);
   if (!provider) return { ok: false, error: "This payment method isn't available." };
+  if (DEMO_MODE) return placeDemoOrderAction(data, user, provider);
 
   const { cartId, items } = await getCartItemsForCheckout();
   if (!cartId || !items.length) return { ok: false, error: "Your bag is empty." };
@@ -141,4 +149,48 @@ export async function placeOrderAction(input: unknown): Promise<ActionResult<{ r
     ok: true,
     data: { redirectTo: initiation.type === "redirect" ? initiation.url : `/checkout/confirmation/${order.access_token}` },
   };
+}
+
+/**
+ * Demo mode: the same flow against the bundled catalogue. The order is priced
+ * by demo pricing and saved in this browser only — no stock is reserved, no
+ * payment is initiated, no newsletter sign-up is recorded and nothing is emailed.
+ */
+async function placeDemoOrderAction(
+  data: z.output<typeof checkoutSchema>,
+  user: User | null,
+  provider: PaymentProvider,
+): Promise<ActionResult<{ redirectTo: string }>> {
+  const { cartId, items } = await getCartItemsForCheckout();
+  if (!cartId || !items.length) return { ok: false, error: "Your bag is empty." };
+
+  let shipping = toOrderAddress(data.shipping);
+  if (user && data.savedAddressId) {
+    const saved = await findDemoOrderAddress(data.savedAddressId);
+    if (!saved) return { ok: false, error: "That saved address could not be found." };
+    shipping = saved;
+  }
+
+  const { data: placed, error } = await placeDemoOrder({
+    userId: user?.id ?? null,
+    email: user?.email ?? data.email,
+    phone: data.phone,
+    items,
+    shippingMethod: data.shippingMethod,
+    couponCode: data.couponCode || null,
+    paymentMethod: provider.code,
+    shippingAddress: shipping,
+    billingAddress: data.billingSameAsShipping || !data.billing ? null : toOrderAddress(data.billing),
+    notes: data.notes || null,
+    taxRate: serverEnv().TAX_RATE,
+    initialStatus: provider.initialOrderStatus,
+  });
+  if (error) return { ok: false, error: friendlyOrderError(error.message, error.details) };
+
+  await clearCart(cartId).catch((e) => console.error("Cart clear failed", e));
+  if (user && data.saveAddress && !data.savedAddressId) {
+    await saveDemoOrderAddress(shipping).catch((e) => console.error("Address save failed", e));
+  }
+
+  return { ok: true, data: { redirectTo: `/checkout/confirmation/${placed.access_token}` } };
 }

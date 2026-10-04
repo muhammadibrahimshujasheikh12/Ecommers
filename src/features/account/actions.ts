@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoDeleteAddress, demoSaveAddress, demoSetDefaultAddress, demoUpdateProfile } from "@/lib/demo/account";
 import { profileSchema, savedAddressSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/types/domain";
 
@@ -23,6 +25,7 @@ export async function updateProfileAction(input: unknown): Promise<ActionResult>
   if (!parsed.success) return { ok: false, error: "Please check the highlighted fields.", fieldErrors: fieldErrors(parsed.error.issues) };
   const user = await requireUser().catch(() => null);
   if (!user) return { ok: false, error: "Please sign in again." };
+  if (DEMO_MODE) return demoUpdateProfile(parsed.data);
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("profiles")
@@ -39,6 +42,7 @@ export async function saveAddressAction(input: unknown, addressId?: string): Pro
   if (addressId && !z.uuid().safeParse(addressId).success) return { ok: false, error: "Invalid address." };
   const user = await requireUser().catch(() => null);
   if (!user) return { ok: false, error: "Please sign in again." };
+  if (DEMO_MODE) return demoSaveAddress(parsed.data, addressId);
 
   const supabase = await createSupabaseServerClient();
   const a = parsed.data;
@@ -72,6 +76,7 @@ export async function deleteAddressAction(addressId: string): Promise<ActionResu
   if (!z.uuid().safeParse(addressId).success) return { ok: false, error: "Invalid address." };
   const user = await requireUser().catch(() => null);
   if (!user) return { ok: false, error: "Please sign in again." };
+  if (DEMO_MODE) return demoDeleteAddress(addressId);
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("addresses").delete().eq("id", addressId);
   if (error) return { ok: false, error: "We couldn't delete this address." };
@@ -83,6 +88,7 @@ export async function setDefaultAddressAction(addressId: string): Promise<Action
   if (!z.uuid().safeParse(addressId).success) return { ok: false, error: "Invalid address." };
   const user = await requireUser().catch(() => null);
   if (!user) return { ok: false, error: "Please sign in again." };
+  if (DEMO_MODE) return demoSetDefaultAddress(addressId);
   const supabase = await createSupabaseServerClient();
   await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id).eq("is_default", true);
   const { error } = await supabase.from("addresses").update({ is_default: true }).eq("id", addressId);

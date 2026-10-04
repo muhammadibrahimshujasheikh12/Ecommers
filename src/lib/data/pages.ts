@@ -1,6 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { CONTENT_TAG, createSupabasePublicClient } from "@/lib/supabase/public";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoPage } from "@/lib/demo/pages";
 
 export type ContentPage = {
   slug: string;
@@ -12,6 +14,7 @@ export type ContentPage = {
 
 /** Editable long-form page (policies, FAQs) from the `pages` table. */
 export const getPage = cache(async (slug: string): Promise<ContentPage | null> => {
+  if (DEMO_MODE) return demoPage(slug);
   const supabase = createSupabasePublicClient({ revalidate: 3600, tags: [CONTENT_TAG] });
   const { data, error } = await supabase
     .from("pages")

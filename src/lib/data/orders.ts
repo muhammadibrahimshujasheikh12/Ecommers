@@ -1,6 +1,8 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoGetMyOrder, demoGetMyOrders, demoGetOrderByAccessToken, demoTrackOrder } from "@/lib/demo/orders";
 import type { OrderAddress, OrderDetail, OrderSummary } from "@/types/domain";
 
 const DETAIL_SELECT = `
@@ -89,6 +91,7 @@ function toDetail(row: DetailRow): OrderDetail {
 
 /** Orders of the signed-in user (RLS: only their own rows are visible). */
 export async function getMyOrders(limit = 50): Promise<OrderSummary[]> {
+  if (DEMO_MODE) return demoGetMyOrders(limit);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("orders")
@@ -111,6 +114,7 @@ export async function getMyOrders(limit = 50): Promise<OrderSummary[]> {
 /** A single order of the signed-in user, or null (also when it belongs to someone else). */
 export async function getMyOrder(orderId: string): Promise<OrderDetail | null> {
   if (!/^[0-9a-f-]{36}$/i.test(orderId)) return null;
+  if (DEMO_MODE) return demoGetMyOrder(orderId);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("orders")
@@ -125,6 +129,7 @@ export async function getMyOrder(orderId: string): Promise<OrderDetail | null> {
 /** Guest confirmation look-up by unguessable access token. */
 export async function getOrderByAccessToken(token: string): Promise<OrderDetail | null> {
   if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
+  if (DEMO_MODE) return demoGetOrderByAccessToken(token);
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from("orders")
@@ -138,6 +143,7 @@ export async function getOrderByAccessToken(token: string): Promise<OrderDetail 
 
 /** Public order tracking: requires both order number and the email used. */
 export async function trackOrder(orderNumber: string, email: string): Promise<OrderDetail | null> {
+  if (DEMO_MODE) return demoTrackOrder(orderNumber, email);
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from("orders")

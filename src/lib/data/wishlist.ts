@@ -1,8 +1,11 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { demoWishlistIds } from "@/lib/demo/wishlist";
 
 /** Product ids in the signed-in user's wishlist (RLS-scoped), newest first. */
 export async function getWishlistIds(): Promise<string[]> {
+  if (DEMO_MODE) return demoWishlistIds();
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("wishlists")

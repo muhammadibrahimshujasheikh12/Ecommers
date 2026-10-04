@@ -1,9 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * End-to-end tests. They run against a running app connected to a seeded
- * Supabase project (local `supabase start` + `supabase db reset` recommended)
- * with email confirmations disabled, so sign-up signs the user in.
+ * End-to-end tests. They run against a running app, either in demo mode (no
+ * Supabase env vars) or connected to a seeded Supabase project (local
+ * `supabase start` + `supabase db reset`) with email confirmations disabled,
+ * so sign-up signs the user in.
  *
  *   npm run build && npm run start   # in one terminal
  *   npm run test:e2e                 # in another
