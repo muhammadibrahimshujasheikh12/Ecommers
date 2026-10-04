@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AURAQ — Luxury Pret, Formals & Unstitched</title>
+  <meta name="description" content="AURAQ homepage design prototype — premium Pakistani fashion e-commerce.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Jost:wght@300;400;500&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ============ Announcement Bar ============ -->
+<div class="announce" id="announcement-bar">
+  <div class="announce__inner container">
+    <span class="announce__side">Customer care: +92 42 111 287 727</span>
+    <div class="announce__center">
+      <button class="announce__arrow" data-announce="-1" aria-label="Previous message">‹</button>
+      <p class="announce__msg" aria-live="polite"></p>
+      <button class="announce__arrow" data-announce="1" aria-label="Next message">›</button>
+    </div>
+    <span class="announce__side announce__side--right">
+      <button class="currency js-currency" aria-haspopup="listbox">Pakistan (PKR Rs.) ▾</button>
+    </span>
+  </div>
+</div>
+
+<!-- ============ Header ============ -->
+<header class="header" id="header">
+  <div class="header__bar container">
+    <div class="header__left">
+      <button class="hbtn hbtn--menu js-open-nav" aria-label="Open menu">{{icon:menu}}</button>
+      <button class="hbtn js-open-search" aria-label="Search">{{icon:search}}<span class="hbtn__label">Search</span></button>
+    </div>
+    <a href="#" class="logo" aria-label="AURAQ home">
+      <span class="logo__word">AURAQ</span>
+      <span class="logo__sub">Lahore</span>
+    </a>
+    <div class="header__right">
+      <div class="account">
+        <button class="hbtn hbtn--hide-sm js-account" aria-haspopup="true" aria-expanded="false" aria-label="Account">{{icon:user}}</button>
+        <div class="account-menu" id="account-menu" role="menu">
+          <p class="account-menu__title">Welcome to AURAQ</p>
+          <p class="account-menu__text">Sign in for faster checkout, order tracking and your wishlist.</p>
+          <a href="#" class="btn btn--primary btn--block">Sign In</a>
+          <a href="#" class="btn btn--secondary btn--block">Create Account</a>
+          <ul>
+            <li><a href="#">My Orders</a></li>
+            <li><a href="#">Track Order</a></li>
+            <li><a href="#">Wishlist</a></li>
+            <li><a href="#">Addresses</a></li>
+          </ul>
+        </div>
+      </div>
+      <button class="hbtn hbtn--hide-sm" aria-label="Wishlist">{{icon:heart}}<span class="count count--light js-wish-count" hidden>0</span></button>
+      <button class="hbtn js-open-bag" aria-label="Shopping bag">{{icon:bag}}<span class="count js-bag-count">2</span></button>
+    </div>
+  </div>
+
+  <nav class="nav" aria-label="Main">
+    <ul class="nav__list container"></ul>
+  </nav>
+
+  <!-- Mega menu -->
+  <div class="mega" id="mega" aria-hidden="true">
+    <div class="mega__inner container">
+      <div class="mega__col">
+        <p class="mega__title">Shop by Category</p>
+        <ul class="js-mega-categories"></ul>
+      </div>
+      <div class="mega__col">
+        <p class="mega__title">Shop by Collection</p>
+        <ul class="js-mega-collections"></ul>
+      </div>
+      <div class="mega__col">
+        <p class="mega__title">Discover</p>
+        <ul class="js-mega-more"></ul>
+        <a href="#" class="btn-text mega__all">View All {{icon:arrow}}</a>
+      </div>
+      <div class="mega__features js-mega-features"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ Search Overlay ============ -->
+<div class="search" id="search" role="dialog" aria-modal="true" aria-label="Search" aria-hidden="true">
+  <div class="search__inner container">
+    <div class="search__bar">
+      {{icon:search}}
+      <input type="search" class="search__input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+      <button class="hbtn js-close-search" aria-label="Close search">{{icon:close}}</button>
+    </div>
+    <div class="search__body">
+      <aside class="search__side">
+        <p class="eyebrow">Trending Searches</p>
+        <ul class="search__trending js-trending"></ul>
+        <p class="eyebrow">Popular Categories</p>
+        <ul class="search__links">
+          <li><a href="#">New Arrivals</a></li>
+          <li><a href="#">Ready to Wear</a></li>
+          <li><a href="#">Formal</a></li>
+          <li><a href="#">Best Sellers</a></li>
+        </ul>
+      </aside>
+      <div class="search__results">
+        <div class="search__results-head">
+          <p class="eyebrow js-search-heading">Just In</p>
+          <a href="#" class="btn-text js-search-all" hidden>View all results {{icon:arrow}}</a>
+        </div>
+        <div class="search__grid js-search-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Bag Drawer ============ -->
+<aside class="drawer drawer--right" id="bag" aria-label="Shopping bag" aria-hidden="true">
+  <div class="drawer__head">
+    <p class="drawer__title">Your Bag <span class="js-bag-count-text">(2)</span></p>
+    <button class="hbtn js-close-drawer" aria-label="Close bag">{{icon:close}}</button>
+  </div>
+  <div class="ship-progress">
+    <p>You’re <strong class="js-ship-left">Rs. 0</strong> away from complimentary delivery</p>
+    <div class="ship-progress__bar"><span class="js-ship-bar"></span></div>
+  </div>
+  <ul class="bag-list js-bag-list"></ul>
+  <div class="drawer__foot">
+    <div class="drawer__total"><span>Subtotal</span><strong class="js-bag-total">Rs. 0</strong></div>
+    <p class="drawer__note">Shipping and taxes calculated at checkout.</p>
+    <a href="#" class="btn btn--primary btn--block">Checkout</a>
+    <a href="#" class="btn btn--secondary btn--block">View Bag</a>
+  </div>
+</aside>
+
+<!-- ============ Mobile Navigation ============ -->
+<aside class="drawer drawer--left" id="mobile-nav" aria-label="Menu" aria-hidden="true">
+  <div class="drawer__head">
+    <span class="logo logo--small"><span class="logo__word">AURAQ</span></span>
+    <button class="hbtn js-close-drawer" aria-label="Close menu">{{icon:close}}</button>
+  </div>
+  <div class="mnav">
+    <ul class="mnav__list js-mnav"></ul>
+    <a href="#" class="mnav__feature">
+      <div class="mnav__feature-img js-mnav-feature"></div>
+      <div><p class="eyebrow">New Season</p><p class="mnav__feature-title">The Festive Edit</p></div>
+    </a>
+    <ul class="mnav__utility">
+      <li><a href="#">{{icon:user}} Sign In / Register</a></li>
+      <li><a href="#">{{icon:heart}} Wishlist</a></li>
+      <li><a href="#">{{icon:truck}} Track Order</a></li>
+      <li><a href="#">{{icon:globe}} Pakistan (PKR Rs.)</a></li>
+      <li><a href="#">{{icon:chat}} WhatsApp Customer Care</a></li>
+    </ul>
+  </div>
+</aside>
+
+<div class="scrim js-scrim" hidden></div>
+
+<main id="main">
+
+  <!-- ============ Hero Campaign ============ -->
+  <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Campaigns">
+    <div class="hero__slides js-hero"></div>
+    <div class="hero__controls container">
+      <div class="hero__count"><span class="js-hero-index">01</span> / <span class="js-hero-total">03</span></div>
+      <div class="hero__progress js-hero-progress"></div>
+      <div class="hero__arrows">
+        <button class="hero__arrow" data-hero="-1" aria-label="Previous campaign">{{icon:left}}</button>
+        <button class="hero__arrow" data-hero="1" aria-label="Next campaign">{{icon:right}}</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Campaign Stories ============ -->
+  <section class="section stories" id="campaign-stories">
+    <div class="container">
+      <div class="shead">
+        <div><p class="eyebrow">Now Showing</p><h2 class="h-section">The Collections</h2></div>
+        <a href="#" class="btn-text">All Collections {{icon:arrow}}</a>
+      </div>
+      <div class="stories__grid">
+        <a href="#" class="story story--lead">
+          <div class="story__img" data-art="campaigns.0" data-slot="campaign-1"></div>
+          <div class="story__overlay">
+            <p class="eyebrow">Eid Festive ’26 · 48 Styles</p>
+            <h3 class="story__title">The Festive Edit</h3>
+            <p class="story__sub">Gold-thread organza, tilla and gota for the season of gatherings.</p>
+            <span class="btn btn--primary">Shop Now</span>
+          </div>
+        </a>
+        <div class="stories__side">
+          <a href="#" class="story">
+            <div class="story__img" data-art="campaigns.1" data-slot="campaign-2"></div>
+            <div class="story__meta">
+              <div><h3 class="story__title story__title--s">Mehr-o-Mah</h3><p class="story__sub">Luxury pret in moonlit pastels.</p></div>
+              <span class="btn-text">Shop Now {{icon:arrow}}</span>
+            </div>
+          </a>
+          <a href="#" class="story">
+            <div class="story__img" data-art="campaigns.2" data-slot="campaign-3"></div>
+            <div class="story__meta">
+              <div><h3 class="story__title story__title--s">Summer Lawn Vol. II</h3><p class="story__sub">Unstitched three-piece prints.</p></div>
+              <span class="btn-text">Shop Now {{icon:arrow}}</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Shop by Category ============ -->
+  <section class="section section--tight-top categories" id="shop-by-category">
+    <div class="container">
+      <div class="shead">
+        <div><p class="eyebrow">Find Your Fit</p><h2 class="h-section">Shop by Category</h2></div>
+      </div>
+      <div class="categories__row js-categories"></div>
+    </div>
+  </section>
+
+  <!-- ============ New Arrivals ============ -->
+  <section class="section section--tight-top products" id="new-in">
+    <div class="container">
+      <div class="shead">
+        <div><p class="eyebrow">Just Landed</p><h2 class="h-section">New Arrivals</h2></div>
+        <a href="#" class="btn-text">View All {{icon:arrow}}</a>
+      </div>
+      <div class="pgrid js-new"></div>
+      <a href="#" class="btn btn--secondary btn--mobile-only">View All New Arrivals</a>
+    </div>
+  </section>
+
+  <!-- ============ Editorial Break ============ -->
+  <section class="editorial" id="editorial-break">
+    <div class="editorial__img">
+      <div class="art-wide" data-art="editorial" data-align="right" data-slot="editorial"></div>
+      <div class="art-tall" data-art="editorial" data-portrait="1" data-compact="1" data-slot="editorial-mobile"></div>
+    </div>
+    <div class="editorial__content container">
+      <div class="editorial__copy">
+        <p class="eyebrow eyebrow--light">New Season</p>
+        <h2 class="editorial__title">A Study in Elegance</h2>
+        <p class="editorial__text">Hand-embroidered raw silk and chiffon, cut for the long evenings of the wedding season.</p>
+        <a href="#" class="btn btn--light">Discover the Collection</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Shop the Look ============ -->
+  <section class="section look" id="shop-the-look">
+    <div class="container look__grid">
+      <div class="look__img">
+        <div class="look__photo" data-art="look" data-slot="look"></div>
+        <div class="js-hotspots"></div>
+      </div>
+      <div class="look__panel">
+        <p class="eyebrow">Shop the Look</p>
+        <h2 class="look__title">Ivory &amp; Gold, Day to Dusk</h2>
+        <p class="look__text">An embroidered kurta, a whisper-light organza dupatta and a flowing sharara. Wear them together, or apart.</p>
+        <div class="look__items js-look"></div>
+        <div class="look__total">
+          <div><span class="eyebrow">Complete Look</span><strong class="js-look-total"></strong></div>
+          <button class="btn btn--primary js-add-look">Add All to Bag</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Best Sellers ============ -->
+  <section class="section products products--center" id="best-sellers">
+    <div class="container">
+      <div class="shead shead--center">
+        <div><p class="eyebrow">Most Loved</p><h2 class="h-section">Best Sellers</h2></div>
+      </div>
+      <div class="pgrid js-best"></div>
+      <div class="center-cta"><a href="#" class="btn btn--secondary">View All Best Sellers</a></div>
+    </div>
+  </section>
+
+  <!-- ============ Collection Spotlight ============ -->
+  <section class="spotlight" id="collection-spotlight">
+    <div class="spotlight__img" data-art="spotlight" data-slot="spotlight"></div>
+    <div class="spotlight__panel">
+      <div class="spotlight__copy">
+        <p class="eyebrow">The Signature Collection</p>
+        <h2 class="spotlight__title">Crafted for Every Celebration</h2>
+        <p class="spotlight__text">Each Signature piece passes through the hands of our karigars for up to 120 hours, from hand-drawn motifs to zardozi and finishing. Heirlooms, made for now.</p>
+        <ul class="spotlight__facts">
+          <li><strong>120</strong><span>Hours of handwork</span></li>
+          <li><strong>24</strong><span>Limited styles</span></li>
+          <li><strong>Lahore</strong><span>Atelier made</span></li>
+        </ul>
+        <a href="#" class="btn btn--primary">Explore Collection</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Watch & Shop ============ -->
+  <section class="section watch" id="watch-and-shop">
+    <div class="container">
+      <div class="shead">
+        <div><p class="eyebrow">In Motion</p><h2 class="h-section">Watch &amp; Shop</h2></div>
+        <a href="#" class="btn-text">Follow @auraq.official {{icon:arrow}}</a>
+      </div>
+      <div class="watch__row js-watch"></div>
+    </div>
+  </section>
+
+  <!-- ============ Reviews ============ -->
+  <section class="section reviews" id="reviews">
+    <div class="container">
+      <div class="reviews__head">
+        <p class="eyebrow">Reviews</p>
+        <h2 class="h-section">What Our Customers Say</h2>
+        <div class="reviews__summary">
+          <span class="reviews__score js-score"></span>
+          <div>
+            <span class="js-score-stars"></span>
+            <p>Based on <strong class="js-score-count"></strong> verified reviews</p>
+          </div>
+        </div>
+      </div>
+      <div class="reviews__row js-reviews"></div>
+      <div class="center-cta"><a href="#" class="btn-text">Read All Reviews {{icon:arrow}}</a></div>
+    </div>
+  </section>
+
+  <!-- ============ Trust Strip ============ -->
+  <section class="trust" id="services" aria-label="Our services">
+    <ul class="trust__list container">
+      <li>{{icon:globe:28}}<div><strong>Worldwide Shipping</strong><span>Delivered to 40+ countries</span></div></li>
+      <li>{{icon:exchange:28}}<div><strong>Easy Exchange</strong><span>Within 14 days of delivery</span></div></li>
+      <li>{{icon:lock:28}}<div><strong>Secure Checkout</strong><span>Cards, wallets &amp; COD</span></div></li>
+      <li>{{icon:chat:28}}<div><strong>Customer Support</strong><span>Mon–Sat, 10am–8pm PKT</span></div></li>
+    </ul>
+  </section>
+
+  <!-- ============ Style With Us ============ -->
+  <section class="section gallery" id="the-edit">
+    <div class="container">
+      <div class="shead shead--center">
+        <div><p class="eyebrow">@auraq.official</p><h2 class="h-section">Style With Us</h2></div>
+      </div>
+      <div class="gallery__grid js-gallery"></div>
+    </div>
+  </section>
+
+  <!-- ============ Newsletter ============ -->
+  <section class="newsletter" id="newsletter">
+    <div class="container newsletter__inner">
+      <p class="eyebrow">The AURAQ Letter</p>
+      <h2 class="newsletter__title">Join Our World</h2>
+      <p class="newsletter__text">Be the first to discover new collections, exclusive launches and private offers.</p>
+      <form class="field-inline js-newsletter" novalidate>
+        <div class="field">
+          <input type="email" id="nl-email" class="field__input" placeholder=" " required autocomplete="email">
+          <label for="nl-email" class="field__label">Email Address</label>
+        </div>
+        <button class="btn btn--primary" type="submit">Subscribe</button>
+        <p class="field__msg" role="status"></p>
+      </form>
+      <p class="newsletter__legal">By subscribing you agree to our <a href="#">Privacy Policy</a>. Unsubscribe at any time.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ============ Footer ============ -->
+<footer class="footer" id="footer">
+  <div class="container footer__top">
+    <div class="footer__brand">
+      <span class="logo logo--left"><span class="logo__word">AURAQ</span><span class="logo__sub">Lahore</span></span>
+      <p>Contemporary Pakistani luxury — pret, formals and unstitched, crafted in our Lahore atelier since 2012.</p>
+      <ul class="footer__contact">
+        <li>{{icon:phone:18}} +92 42 111 287 727</li>
+        <li>{{icon:mail:18}} care@auraq.pk</li>
+        <li>{{icon:pin:18}} 14-C, MM Alam Road, Gulberg III, Lahore</li>
+      </ul>
+    </div>
+    <div class="footer__cols">
+      <details class="fcol" open>
+        <summary>Shop</summary>
+        <ul><li><a href="#">New Arrivals</a></li><li><a href="#">Ready to Wear</a></li><li><a href="#">Unstitched</a></li><li><a href="#">Collections</a></li><li><a href="#">Best Sellers</a></li></ul>
+      </details>
+      <details class="fcol" open>
+        <summary>Customer Care</summary>
+        <ul><li><a href="#">Contact Us</a></li><li><a href="#">FAQs</a></li><li><a href="#">Shipping Policy</a></li><li><a href="#">Return Policy</a></li><li><a href="#">Cancellation Policy</a></li><li><a href="#">Track Order</a></li></ul>
+      </details>
+      <details class="fcol" open>
+        <summary>Legal</summary>
+        <ul><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms &amp; Conditions</a></li></ul>
+      </details>
+      <details class="fcol" open>
+        <summary>Follow</summary>
+        <ul class="footer__social">
+          <li><a href="#">{{icon:instagram:18}} Instagram</a></li>
+          <li><a href="#">{{icon:facebook:18}} Facebook</a></li>
+          <li><a href="#">{{icon:tiktok:18}} TikTok</a></li>
+          <li><a href="#">{{icon:pinterest:18}} Pinterest</a></li>
+        </ul>
+      </details>
+    </div>
+    <div class="footer__news">
+      <p class="fcol__title">Newsletter</p>
+      <p>New collections and private offers, first.</p>
+      <form class="footer__form js-newsletter" novalidate>
+        <div class="field">
+          <input type="email" id="ft-email" class="field__input" placeholder=" " required>
+          <label for="ft-email" class="field__label">Email Address</label>
+        </div>
+        <button class="footer__submit" aria-label="Subscribe">{{icon:arrow}}</button>
+        <p class="field__msg" role="status"></p>
+      </form>
+    </div>
+  </div>
+  <div class="container footer__bottom">
+    <p>© 2026 AURAQ. All rights reserved.</p>
+    <ul class="payments" aria-label="Payment methods">
+      <li>VISA</li><li>Mastercard</li><li>UnionPay</li><li>JazzCash</li><li>Easypaisa</li><li>COD</li>
+    </ul>
+    <div class="dropdown js-dropdown">
+      <button class="dropdown__btn" aria-haspopup="listbox" aria-expanded="false">{{icon:globe:16}} <span class="js-dropdown-value">Pakistan · PKR Rs.</span> {{icon:down:14}}</button>
+      <ul class="dropdown__list" role="listbox">
+        <li role="option" aria-selected="true">Pakistan · PKR Rs.</li>
+        <li role="option">United Kingdom · GBP £</li>
+        <li role="option">United States · USD $</li>
+        <li role="option">UAE · AED</li>
+        <li role="option">Canada · CAD $</li>
+        <li role="option">Australia · AUD $</li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<div class="toast js-toast" role="status" aria-live="polite"></div>
+
+<script src="js/data.js"></script>
+<script src="js/media.js"></script>
+<script src="js/components.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

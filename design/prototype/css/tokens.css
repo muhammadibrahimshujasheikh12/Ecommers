@@ -1,0 +1,155 @@
+/* AURAQ — design tokens as CSS custom properties.
+   Source of truth: design/tokens/tokens.json (same names, kebab-cased).
+   Port directly to Next.js (app/globals.css) or a Tailwind theme. */
+
+@font-face {
+  /* Licensed Bryn Vogue goes in /fonts. Falls back to Bodoni Moda until supplied. */
+  font-family: "Bryn Vogue";
+  src: local("Bryn Vogue"), local("BrynVogue-Regular"),
+       url("../fonts/BrynVogue-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* Color / Background */
+  --color-background-primary: #FBF8F3;
+  --color-background-secondary: #F5EFE6;
+  --color-background-tertiary: #EFE6D8;
+  --color-background-inverse: #2A2826;
+  --color-background-overlay: rgba(42, 40, 38, .4);
+
+  /* Color / Pastel */
+  --color-pastel-blush: #F3E3DD;
+  --color-pastel-rose: #D8B4AB;
+  --color-pastel-sage: #DFE4D5;
+  --color-pastel-powder: #DDE5EB;
+  --color-pastel-lavender: #E6E1EC;
+  --color-pastel-beige: #E9DDCB;
+
+  /* Color / Text */
+  --color-text-primary: #2A2826;
+  --color-text-secondary: #57524C;
+  --color-text-muted: #736C64;
+  --color-text-inverse: #FBF8F3;
+  --color-text-sale: #9A4438;
+
+  /* Color / Border */
+  --color-border-subtle: #E6DDD0;
+  --color-border-default: #CFC4B5;
+  --color-border-strong: #2A2826;
+
+  /* Color / Action */
+  --color-action-primary: #2A2826;
+  --color-action-primary-hover: #45403B;
+  --color-action-focus: #8C6B62;
+
+  --color-status-success: #4F6B4A;
+  --color-status-error: #9A4438;
+
+  /* Font */
+  --font-display: "Bryn Vogue", "Bodoni Moda", "Didot", Georgia, serif;
+  --font-ui: "Jost", "Futura PT", "Futura", "Century Gothic", sans-serif;
+  --font-body: "Open Sans", system-ui, sans-serif;
+
+  /* Type / Display + Heading (desktop) */
+  --type-display-xl: 104px;
+  --type-display-l: 80px;
+  --type-heading-xl: 60px;
+  --type-heading-l: 44px;
+  --type-heading-m: 34px;
+  --type-heading-s: 26px;
+
+  /* Type / UI */
+  --type-ui-nav: 13px;
+  --type-ui-label: 12px;
+  --type-ui-button: 13px;
+  --type-ui-large: 18px;
+  --type-ui-medium: 15px;
+  --type-ui-small: 13px;
+
+  /* Type / Body */
+  --type-body-large: 17px;
+  --type-body-regular: 15px;
+  --type-body-small: 13px;
+
+  --tracking-nav: .16em;
+  --tracking-label: .2em;
+  --tracking-button: .18em;
+
+  /* Spacing */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-s: 12px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --space-5xl: 128px;
+  --space-section: 128px;
+
+  /* Radius */
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-s: 4px;
+  --radius-full: 999px;
+
+  /* Shadow */
+  --shadow-xs: 0 1px 2px rgba(42, 40, 38, .04);
+  --shadow-s: 0 6px 20px rgba(42, 40, 38, .06);
+  --shadow-overlay: 0 24px 48px rgba(42, 40, 38, .08);
+
+  /* Grid */
+  --grid-columns: 12;
+  --grid-margin: 64px;
+  --grid-gutter: 24px;
+  --grid-max: 1440px;
+
+  /* Motion */
+  --duration-fast: 160ms;
+  --duration-base: 280ms;
+  --duration-slow: 600ms;
+  --ease-standard: cubic-bezier(.22, .61, .36, 1);
+
+  --header-height: 152px;
+}
+
+/* Tablet — 1024 frame */
+@media (max-width: 1279px) {
+  :root {
+    --type-display-xl: 84px;
+    --type-display-l: 64px;
+    --type-heading-xl: 48px;
+    --type-heading-l: 38px;
+    --type-heading-m: 30px;
+    --type-heading-s: 24px;
+    --grid-columns: 8;
+    --grid-margin: 40px;
+    --grid-gutter: 20px;
+    --space-section: 96px;
+  }
+}
+
+/* Mobile — 390 frame. Separate scale, not a blind shrink. */
+@media (max-width: 767px) {
+  :root {
+    --type-display-xl: 54px;
+    --type-display-l: 46px;
+    --type-heading-xl: 40px;
+    --type-heading-l: 34px;
+    --type-heading-m: 28px;
+    --type-heading-s: 22px;
+    --type-ui-nav: 14px;
+    --type-ui-medium: 14px;
+    --type-ui-small: 13px;
+    --type-body-large: 16px;
+    --type-body-regular: 15px;
+    --grid-columns: 4;
+    --grid-margin: 16px;
+    --grid-gutter: 12px;
+    --space-section: 64px;
+    --header-height: 100px;
+  }
+}
