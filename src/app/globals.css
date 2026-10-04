@@ -1,0 +1,315 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   AURAQ design tokens
+   Pastels are surfaces only; text and CTAs are charcoal for AA contrast.
+   ========================================================================== */
+@theme {
+  --color-ivory: #fbf8f3;
+  --color-cream: #f5efe6;
+  --color-beige: #efe6d8;
+  --color-sand: #e9ddcb;
+  --color-blush: #f3e3dd;
+  --color-rose: #d8b4ab;
+  --color-sage: #dfe4d5;
+  --color-powder: #dde5eb;
+  --color-lavender: #e6e1ec;
+
+  --color-charcoal: #2a2826;
+  --color-charcoal-soft: #45403b;
+  --color-ink-2: #57524c;
+  --color-ink-3: #736c64;
+  --color-line: #e6ddd0;
+  --color-line-strong: #cfc4b5;
+  --color-sale: #9a4438;
+  --color-success: #4f6b4a;
+  --color-warning: #8a5a12;
+  --color-focus: #8c6b62;
+
+  --font-display: "Bryn Vogue", var(--font-bodoni), "Didot", Georgia, serif;
+  --font-ui: var(--font-jost), "Futura PT", "Futura", ui-sans-serif, sans-serif;
+  --font-body: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-soft: 0 6px 20px rgb(42 40 38 / 0.06);
+  --shadow-overlay: 0 24px 48px rgb(42 40 38 / 0.1);
+
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --animate-fade-up: fade-up 700ms var(--ease-standard) both;
+  --animate-fade-in: fade-in 300ms var(--ease-standard) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 140px;
+  }
+  body {
+    background: var(--color-ivory);
+    color: var(--color-charcoal);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: var(--color-blush);
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+  }
+  dialog {
+    color: inherit;
+  }
+  dialog::backdrop {
+    background: rgb(42 40 38 / 0.4);
+  }
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Typography & layout utilities
+   --------------------------------------------------------------------------- */
+@utility container-site {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 16px;
+  @media (width >= 768px) {
+    padding-inline: 32px;
+  }
+  @media (width >= 1024px) {
+    padding-inline: 40px;
+  }
+  @media (width >= 1280px) {
+    padding-inline: 64px;
+  }
+}
+
+@utility eyebrow {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+
+@utility ui-label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@utility heading-section {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(30px, 2.4vw + 18px, 44px);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@utility heading-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(48px, 5.2vw + 20px, 104px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+@utility heading-editorial {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 3.6vw + 18px, 80px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+
+@utility heading-page {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(34px, 2.6vw + 20px, 60px);
+  line-height: 1.05;
+}
+
+@utility link-underline {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
+  transition: background-size 280ms var(--ease-standard);
+  padding-bottom: 4px;
+  &:hover {
+    background-size: 40% 1px;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Editorial sections fade up as they enter the viewport (no JS). */
+@utility reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: fade-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 22%;
+    }
+  }
+}
+
+/* Dialog motion (native <dialog>; drawers & overlays) */
+@utility dialog-drawer {
+  margin: 0;
+  max-height: 100dvh;
+  height: 100dvh;
+  max-width: 100vw;
+  border: 0;
+  padding: 0;
+  background: var(--color-ivory);
+  box-shadow: var(--shadow-overlay);
+  transition:
+    translate 450ms var(--ease-standard),
+    overlay 450ms allow-discrete,
+    display 450ms allow-discrete;
+  &::backdrop {
+    transition:
+      opacity 450ms var(--ease-standard),
+      overlay 450ms allow-discrete,
+      display 450ms allow-discrete;
+    opacity: 0;
+  }
+  &[open]::backdrop {
+    opacity: 1;
+  }
+  @starting-style {
+    &[open]::backdrop {
+      opacity: 0;
+    }
+  }
+}
+
+/* Rich text for policies, descriptions */
+@utility prose-auraq {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--color-ink-2);
+  & h2 {
+    font-family: var(--font-display);
+    color: var(--color-charcoal);
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 48px 0 16px;
+    scroll-margin-top: 140px;
+  }
+  & h3 {
+    font-family: var(--font-ui);
+    font-weight: 500;
+    color: var(--color-charcoal);
+    font-size: 18px;
+    margin: 32px 0 8px;
+  }
+  & p {
+    margin: 0 0 16px;
+  }
+  & ul,
+  & ol {
+    margin: 0 0 16px;
+    padding-left: 22px;
+  }
+  & ul {
+    list-style: disc;
+  }
+  & ol {
+    list-style: decimal;
+  }
+  & li {
+    margin: 6px 0;
+  }
+  & strong {
+    color: var(--color-charcoal);
+    font-weight: 600;
+  }
+  & a {
+    color: var(--color-charcoal);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  & table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 24px;
+    font-size: 14px;
+  }
+  & th,
+  & td {
+    text-align: left;
+    padding: 12px 12px 12px 0;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: top;
+  }
+  & th {
+    font-family: var(--font-ui);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--color-charcoal);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}

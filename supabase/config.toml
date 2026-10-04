@@ -1,0 +1,59 @@
+# Supabase CLI configuration for local development (`supabase start`).
+# Hosted projects: mirror the [auth] settings in Dashboard → Authentication.
+project_id = "auraq-storefront"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+# Local mail catcher: password-reset and other auth emails appear at
+# http://localhost:54324
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "10MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/confirm"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# Off locally (the CLI default) so sign-up signs straight in and the e2e suite
+# can run. Turn "Confirm email" ON in hosted projects — the app handles both.
+enable_confirmations = false
+secure_password_change = false
+max_frequency = "60s"
+
+# Server-side (SSR) friendly links: the app verifies token_hash at /auth/confirm.
+[auth.email.template.confirmation]
+subject = "Confirm your AURAQ account"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your AURAQ password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new email address"
+content_path = "./supabase/templates/email-change.html"
