@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
-import { env } from "@/lib/env";
+import { supabaseConfig } from "@/lib/env";
 import type { Database } from "@/types/database";
 
 export const CATALOG_TAG = "catalog";
@@ -13,7 +13,8 @@ export const CONTENT_TAG = "content";
  */
 export function createSupabasePublicClient(options: { revalidate?: number; tags?: string[] } = {}) {
   const { revalidate = 300, tags = [CATALOG_TAG] } = options;
-  return createClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  const { url, anonKey } = supabaseConfig();
+  return createClient<Database>(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: {
       fetch: (input, init) => fetch(input, { ...init, next: { revalidate, tags } }),

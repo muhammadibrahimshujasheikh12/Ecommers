@@ -24,7 +24,7 @@ const REVIEW_SELECT = "id, rating, title, content, author_name, verified_purchas
 /** Public URL for an object path in the review-images bucket. */
 export function reviewImageUrl(path: string): string {
   if (/^https?:\/\//.test(path) || path.startsWith("/")) return path;
-  return `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/review-images/${path}`;
+  return `${env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/review-images/${path}`;
 }
 
 const toReview = (r: ReviewRow): Review => ({

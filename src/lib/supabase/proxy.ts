@@ -1,8 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { DEMO_COOKIES } from "@/lib/demo/constants";
+import { DEMO_MODE } from "@/lib/demo/mode";
 import type { Database } from "@/types/database";
 
 const PROTECTED_PREFIXES = ["/account"];
+
+/** Sends signed-out visitors on protected routes to /login?next=… */
+function guardProtected(request: NextRequest, signedIn: boolean): NextResponse | null {
+  const { pathname, search } = request.nextUrl;
+  if (signedIn || !PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.search = `?next=${encodeURIComponent(pathname + search)}`;
+  return NextResponse.redirect(url);
+}
 
 /**
  * Refreshes the Supabase session cookie on every matched request and guards
@@ -10,6 +22,11 @@ const PROTECTED_PREFIXES = ["/account"];
  * first line of defence, not the only one.
  */
 export async function updateSession(request: NextRequest) {
+  if (DEMO_MODE) {
+    const signedIn = Boolean(request.cookies.get(DEMO_COOKIES.user)?.value);
+    return guardProtected(request, signedIn) ?? NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -38,13 +55,5 @@ export async function updateSession(request: NextRequest) {
     userId = null;
   }
 
-  const { pathname, search } = request.nextUrl;
-  if (!userId && PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = `?next=${encodeURIComponent(pathname + search)}`;
-    return NextResponse.redirect(url);
-  }
-
-  return response;
+  return guardProtected(request, Boolean(userId)) ?? response;
 }

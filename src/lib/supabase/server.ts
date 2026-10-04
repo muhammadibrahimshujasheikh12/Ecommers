@@ -2,7 +2,9 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { env } from "@/lib/env";
+import { supabaseConfig } from "@/lib/env";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { getDemoAuthUser } from "@/lib/demo/session";
 import type { Database } from "@/types/database";
 
 /**
@@ -11,9 +13,10 @@ import type { Database } from "@/types/database";
  * Route Handlers.
  */
 export async function createSupabaseServerClient() {
+  const { url, anonKey } = supabaseConfig();
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -37,6 +40,7 @@ export async function createSupabaseServerClient() {
  * Memoised per request so layouts and pages can both call it cheaply.
  */
 export const getCurrentUser = cache(async () => {
+  if (DEMO_MODE) return getDemoAuthUser();
   const supabase = await createSupabaseServerClient();
   try {
     const { data, error } = await supabase.auth.getUser();

@@ -5,7 +5,7 @@ import { revalidateTag } from "next/cache";
 import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/server";
 import { CATALOG_TAG } from "@/lib/supabase/public";
 import { reviewsTag } from "@/lib/data/reviews";
-import { env } from "@/lib/env";
+import { reviewImagesEnabled } from "@/lib/env";
 import { REVIEW_IMAGE_LIMIT, REVIEW_IMAGE_MAX_BYTES, REVIEW_IMAGE_TYPES, reviewSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/types/domain";
 
@@ -33,7 +33,7 @@ export async function submitReviewAction(formData: FormData): Promise<ActionResu
     return { ok: false, error: "Please check the highlighted fields.", fieldErrors };
   }
 
-  const files = env.NEXT_PUBLIC_REVIEW_IMAGES_ENABLED
+  const files = reviewImagesEnabled
     ? formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0)
     : [];
   if (files.length > REVIEW_IMAGE_LIMIT) return { ok: false, error: `You can add up to ${REVIEW_IMAGE_LIMIT} photos.` };

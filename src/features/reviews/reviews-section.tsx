@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BadgeCheck, MessageSquareText } from "lucide-react";
 import { getMyReview, getProductReviews, REVIEWS_PAGE_SIZE, type ReviewSort } from "@/lib/data/reviews";
 import { getCurrentUser } from "@/lib/supabase/server";
-import { env } from "@/lib/env";
+import { reviewImagesEnabled } from "@/lib/env";
 import { Stars } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { ReviewForm } from "./review-form";
@@ -116,7 +116,7 @@ export async function ReviewsSection({
             {user ? (
               <div className="mt-5">
                 {mine && <p className="mb-4 text-[14px] text-ink-2">You’ve reviewed this product — editing will update your existing review.</p>}
-                <ReviewForm productId={productId} existing={mine} imagesEnabled={env.NEXT_PUBLIC_REVIEW_IMAGES_ENABLED} />
+                <ReviewForm productId={productId} existing={mine} imagesEnabled={reviewImagesEnabled} />
               </div>
             ) : (
               <div className="mt-4">
