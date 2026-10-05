@@ -6,7 +6,10 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const staticPages = ["", "/shop", "/collections", "/track-order", "/contact", "/faqs", "/shipping-policy", "/return-policy", "/cancellation-policy", "/privacy-policy", "/terms-and-conditions"];
+  const staticPages = [
+    "", "/shop", "/collections", "/about", "/stores", "/journal", "/size-guide", "/track-order", "/contact", "/faqs",
+    "/shipping-policy", "/return-policy", "/cancellation-policy", "/privacy-policy", "/terms-and-conditions",
+  ];
   try {
     const [products, categories, collections] = await Promise.all([getAllProductSlugs(), getCategories(), getCollections()]);
     return [

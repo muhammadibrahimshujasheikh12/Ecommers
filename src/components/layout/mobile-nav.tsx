@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MessageCircle, Plus, Truck, UserRound } from "lucide-react";
+import { Heart, MapPin, MessageCircle, Plus, Truck, UserRound } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { mainNav } from "@/content/navigation";
 import { site } from "@/content/site";
@@ -70,6 +70,7 @@ export function MobileNav({ open, onClose, isAuthenticated }: { open: boolean; o
             { href: isAuthenticated ? "/account" : "/login", label: isAuthenticated ? "My Account" : "Sign In / Register", icon: UserRound },
             { href: "/wishlist", label: "Wishlist", icon: Heart },
             { href: "/track-order", label: "Track Order", icon: Truck },
+            { href: "/stores", label: "Store Locator", icon: MapPin },
             { href: site.contact.whatsapp, label: "WhatsApp Customer Care", icon: MessageCircle },
           ].map(({ href, label, icon: Icon }) => (
             <li key={label}>

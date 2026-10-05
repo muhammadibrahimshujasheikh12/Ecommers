@@ -115,6 +115,41 @@ galleryArt.forEach((art, i) => job(`gallery/edit-${i + 1}.jpg`, 900, 1200, art))
 
 job("og-default.jpg", 1200, 630, heroes.festive, { align: "right" });
 
+// Brand pages: About, Store Locator, Journal (public/images/pages)
+const aboutHero = { kind: "scene", bg: "#6F5E54", arch: "#806D62", floor: "#625249", garments: ["#F1E5D4", "#CDB0A6"], figures: 2, tone: "dark" };
+job("pages/about-hero.jpg", 2400, 1350, aboutHero, { align: "right" });
+job("pages/about-hero-mobile.jpg", 1080, 1620, aboutHero, { portrait: true, compact: true });
+const aboutCta = { kind: "scene", bg: "#5A4C57", arch: "#6A5B67", floor: "#4F424C", garments: ["#E9DCCB", "#B8AEC8"], figures: 2, tone: "dark" };
+job("pages/about-cta.jpg", 2400, 1200, aboutCta, { align: "right" });
+job("pages/about-cta-mobile.jpg", 1080, 1620, aboutCta, { portrait: true, compact: true });
+job("pages/founder.jpg", 1200, 1500, { kind: "figure", bg: "#EFE6D8", garment: "#F1E7DA", trouser: "#F1E7DA", accent: "#C8A86A", skin: "#B88A6C", alt: true });
+job("pages/atelier.jpg", 1200, 1500, { kind: "flatlay", bg: "#E9DDCB", fabrics: ["#6E2F3A", "#EFE3CF", "#2F5A4C"] });
+const craftArt = {
+  zardozi: { kind: "figure", bg: "#E4DED5", garment: "#6E2F3A", trouser: "#E4D8C8", accent: "#C8A86A", long: true, alt: true },
+  tilla: { kind: "figure", bg: "#E6E1EC", garment: "#9C8DB8", trouser: "#EEEAF2", accent: "#D9BE8E", alt: true },
+  gota: { kind: "figure", bg: "#F5EFE6", garment: "#EFE3CF", trouser: "#F4ECE4", accent: "#C8A86A", alt: true },
+  resham: { kind: "flatlay", bg: "#F3E3DD", fabrics: ["#D3A79C", "#A9B59C", "#E8DCC4"] },
+  mukesh: { kind: "figure", bg: "#DDE5EB", garment: "#3E4558", trouser: "#C9D2DA", accent: "#D8D8D2", alt: true },
+};
+for (const [k, art] of Object.entries(craftArt)) job(`pages/craft-${k}.jpg`, 900, 1125, art);
+const storeArt = {
+  "lahore-flagship": { bg: "#D9C3B8", arch: "#E6D5CC", floor: "#CDB5A9", garments: ["#EAD7C3", "#C99A90"], figures: 2 },
+  "lahore-emporium": { bg: "#D6DCCB", arch: "#E2E7D8", floor: "#CAD1BE", garments: ["#9FAE93"] },
+  "karachi-dolmen": { bg: "#CBD5DC", arch: "#D9E1E7", floor: "#BFCAD1", garments: ["#A9BACB"] },
+  "islamabad-centaurus": { bg: "#C9C1D3", arch: "#D6CFDF", floor: "#BEB5C9", garments: ["#B8AEC8"] },
+  "dubai-mall": { bg: "#D8CBB6", arch: "#E3D8C6", floor: "#CDBFA8", garments: ["#CDB79A", "#F2EEE6"], figures: 2 },
+};
+for (const [k, art] of Object.entries(storeArt)) job(`pages/store-${k}.jpg`, 1400, 1050, { kind: "scene", figures: 1, ...art });
+job("pages/stores-hero.jpg", 1200, 1500, { kind: "scene", bg: "#E3D3CB", arch: "#EDE1DA", floor: "#D8C5BB", garments: ["#F1E2D8", "#B78C83"], figures: 2, portrait: true });
+const journalArt = {
+  "festive-dupatta": { kind: "scene", bg: "#E8CFC6", arch: "#F0DDD6", floor: "#DCC1B7", garments: ["#F4E8DA"], figures: 1, portrait: true },
+  "lawn-care": { kind: "flatlay", bg: "#DFE4D5", fabrics: ["#BFD8D2", "#F2D7CF", "#E9DFB8"] },
+  zardozi: { kind: "figure", bg: "#4A3F3B", garment: "#6E2F3A", trouser: "#E4D8C8", accent: "#C8A86A", long: true, alt: true },
+  "eid-edit": { kind: "scene", bg: "#CDB9A6", arch: "#DCCBBB", floor: "#C1AC98", garments: ["#F2E6D3", "#AFC0CD"], figures: 2, portrait: true },
+  "fabric-guide": { kind: "flatlay", bg: "#EFE6D8", fabrics: ["#C7B08F", "#AFC0CD", "#7E6470"] },
+};
+for (const [k, art] of Object.entries(journalArt)) job(`pages/journal-${k}.jpg`, 1200, 1500, art);
+
 // ---------------------------------------------------------------------------
 // Existing files are kept byte-for-byte unless --force is passed.
 const pending = force ? jobs : jobs.filter((j) => !existsSync(out(j.file)));

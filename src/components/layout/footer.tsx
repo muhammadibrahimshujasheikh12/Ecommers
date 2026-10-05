@@ -93,9 +93,9 @@ export function Footer() {
               ))}
             </ul>
           </Column>
-          <Column title="Legal">
+          <Column title="The House">
             <ul className="space-y-3">
-              {footerNav.legal.map((l) => (
+              {footerNav.house.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className={linkCls}>
                     {l.label}
@@ -126,9 +126,20 @@ export function Footer() {
       </div>
 
       <div className="container-site flex flex-col gap-5 border-t border-line-strong py-7 md:flex-row md:items-center md:justify-between">
-        <p className="font-ui text-[13px] tracking-[0.04em] text-ink-2">
-          © {new Date().getFullYear()} {site.name}. All rights reserved.
-        </p>
+        <div className="flex flex-col gap-2 font-ui text-[13px] tracking-[0.04em] text-ink-2 md:flex-row md:items-center md:gap-5">
+          <p>
+            © {new Date().getFullYear()} {site.name}. All rights reserved.
+          </p>
+          <ul className="flex gap-5">
+            {footerNav.legal.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="hover:text-charcoal">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
         <ul className="flex flex-wrap gap-2" aria-label="Accepted payment methods">
           {PAYMENTS.map((p) => (
             <li key={p} className="grid h-8 place-items-center rounded-[2px] border border-line-strong bg-ivory px-3 font-ui text-[11px] font-medium tracking-[0.08em] text-ink-2">

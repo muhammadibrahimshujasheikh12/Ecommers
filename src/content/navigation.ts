@@ -122,6 +122,12 @@ export const footerNav = {
     { label: "Cancellation Policy", href: "/cancellation-policy" },
     { label: "Track Order", href: "/track-order" },
   ],
+  house: [
+    { label: "Our Story", href: "/about" },
+    { label: "Store Locator", href: "/stores" },
+    { label: "Journal", href: "/journal" },
+    { label: "Size Guide", href: "/size-guide" },
+  ],
   legal: [
     { label: "Privacy Policy", href: "/privacy-policy" },
     { label: "Terms & Conditions", href: "/terms-and-conditions" },
