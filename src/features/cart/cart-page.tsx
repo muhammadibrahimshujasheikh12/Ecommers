@@ -75,8 +75,11 @@ export function CartPageView({ initialCart, suggestions }: { initialCart: CartVi
         </div>
       </aside>
 
-      {/* Sticky mobile checkout bar */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-4 border-t border-line bg-ivory/95 px-4 py-3 backdrop-blur-sm lg:hidden">
+      {/* Sticky mobile checkout bar (globals.css pads the page bottom so it never hides the footer) */}
+      <div
+        data-mobile-checkout-bar
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-4 border-t border-line bg-ivory/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden"
+      >
         <div className="flex-1 font-ui">
           <p className="text-[12px] uppercase tracking-[0.12em] text-ink-3">Total</p>
           <p className="text-[16px] font-medium">Rs. {Math.round(view.total).toLocaleString("en-US")}</p>

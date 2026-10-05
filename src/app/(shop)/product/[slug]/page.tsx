@@ -49,7 +49,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   return (
     <div className="container-site pb-10 pt-6 md:pt-8">
       <Breadcrumbs items={crumbs} className="mb-6 md:mb-8" />
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 xl:gap-20">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 xl:gap-20">
         <ProductGallery images={product.images} name={product.name} />
         <div className="lg:sticky lg:top-[150px] lg:self-start">
           <PurchasePanel product={product} />

@@ -28,6 +28,9 @@ function loadTrending(): Promise<MiniProduct[]> {
  */
 export function useTrendingProducts(enabled: boolean): MiniProduct[] | null {
   const [products, setProducts] = useState<MiniProduct[] | null>(null);
+  // Forget an empty result once the UI closes, so the next open asks again: after a
+  // failed request that fetches anew, while a successful load resolves from `pending`.
+  if (!enabled && products?.length === 0) setProducts(null);
 
   useEffect(() => {
     if (!enabled || products) return;

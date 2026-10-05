@@ -96,6 +96,12 @@
   summary::-webkit-details-marker {
     display: none;
   }
+  /* Room below the footer for the fixed mobile checkout bar (cart page), so it never covers content. */
+  @media (width < 64rem) {
+    body:has([data-mobile-checkout-bar]) {
+      padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------------

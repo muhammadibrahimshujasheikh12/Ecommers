@@ -100,7 +100,8 @@ export function Header({ isAuthenticated, firstName }: { isAuthenticated: boolea
                 key={item.label}
                 item={item}
                 open={openMenu === item.label}
-                active={pathname === item.href.split("?")[0] && item.href !== "/"}
+                // Query shortcuts (/shop?sort=…, /shop?sale=1) share one path, so they never mark the current section.
+                active={item.href !== "/" && !item.href.includes("?") && pathname === item.href}
                 onOpen={() => (item.mega ? openMega(item.label) : setOpenMenu(null))}
                 onClose={closeMega}
               />

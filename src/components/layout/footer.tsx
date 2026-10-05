@@ -18,7 +18,7 @@ function Column({ title, children }: { title: string; children: React.ReactNode 
     <>
       {/* Desktop: always-open column */}
       <div className="hidden md:block">
-        <p className="mb-6 font-ui text-[13px] font-medium uppercase tracking-[0.16em]">{title}</p>
+        <p className="mb-6 whitespace-nowrap font-ui text-[13px] font-medium uppercase tracking-[0.16em]">{title}</p>
         {children}
       </div>
       {/* Mobile: collapsed accordion (no JS) */}
@@ -36,7 +36,7 @@ function Column({ title, children }: { title: string; children: React.ReactNode 
   );
 }
 
-const linkCls = "font-ui text-[14px] tracking-[0.02em] text-ink-2 transition-colors hover:text-charcoal";
+const linkCls = "whitespace-nowrap font-ui text-[14px] tracking-[0.02em] text-ink-2 transition-colors hover:text-charcoal";
 
 export function Footer() {
   return (
@@ -45,7 +45,7 @@ export function Footer() {
         Footer
       </h2>
       <div className="container-site grid gap-10 pb-10 md:grid-cols-12 md:gap-6 md:pb-16">
-        <div className="md:col-span-12 lg:col-span-3 lg:pr-6">
+        <div className="md:col-span-12 xl:col-span-3 xl:pr-6">
           <Logo className="[&>span:first-child]:text-[30px]" />
           <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-ink-2">
             Contemporary Pakistani luxury — pret, formals and unstitched, crafted in our Lahore atelier.
@@ -70,7 +70,11 @@ export function Footer() {
           </ul>
         </div>
 
-        <nav aria-label="Footer" className="grid border-t border-line-strong md:col-span-8 md:grid-cols-4 md:gap-6 md:border-0 lg:col-span-6">
+        {/* Link columns: two by two on tablets, then four at their natural width, so no label wraps. */}
+        <nav
+          aria-label="Footer"
+          className="grid border-t border-line-strong md:col-span-8 md:grid-cols-2 md:gap-x-6 md:gap-y-10 md:border-0 lg:grid-cols-[repeat(4,max-content)] lg:justify-between lg:pr-6 xl:col-span-6"
+        >
           <Column title="Shop">
             <ul className="space-y-3">
               {footerNav.shop.map((l) => (
@@ -118,22 +122,23 @@ export function Footer() {
           </Column>
         </nav>
 
-        <div className="md:col-span-4 lg:col-span-3">
+        <div className="md:col-span-4 xl:col-span-3">
           <p className="font-ui text-[13px] font-medium uppercase tracking-[0.16em]">Newsletter</p>
           <p className="mt-4 text-[14px] text-ink-2">New collections and private offers, first.</p>
           <NewsletterForm variant="footer" source="footer" />
         </div>
       </div>
 
-      <div className="container-site flex flex-col gap-5 border-t border-line-strong py-7 md:flex-row md:items-center md:justify-between">
+      {/* Groups never break mid-phrase; a group that doesn't fit moves to the next row whole. */}
+      <div className="container-site flex flex-col gap-5 border-t border-line-strong py-7 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-10 md:gap-y-4">
         <div className="flex flex-col gap-2 font-ui text-[13px] tracking-[0.04em] text-ink-2 md:flex-row md:items-center md:gap-5">
-          <p>
+          <p className="whitespace-nowrap">
             © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
           <ul className="flex gap-5">
             {footerNav.legal.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="hover:text-charcoal">
+                <Link href={l.href} className="whitespace-nowrap hover:text-charcoal">
                   {l.label}
                 </Link>
               </li>
@@ -147,7 +152,7 @@ export function Footer() {
             </li>
           ))}
         </ul>
-        <Link href="/shipping-policy" className="font-ui text-[13px] tracking-[0.04em] text-ink-2 hover:text-charcoal">
+        <Link href="/shipping-policy" className="whitespace-nowrap font-ui text-[13px] tracking-[0.04em] text-ink-2 hover:text-charcoal">
           Pakistan · PKR Rs. — we ship worldwide
         </Link>
       </div>

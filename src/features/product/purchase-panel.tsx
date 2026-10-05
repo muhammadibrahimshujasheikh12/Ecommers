@@ -200,22 +200,23 @@ export function PurchasePanel({ product }: { product: ProductDetail }) {
 
       <p className={cn("mt-6 flex items-center gap-2 font-ui text-[14px]", soldOut ? "text-sale" : stock <= LOW_STOCK ? "text-warning" : "text-success")} role="status">
         <span className={cn("size-2 rounded-full", soldOut ? "bg-sale" : stock <= LOW_STOCK ? "bg-[#c28a2c]" : "bg-success")} aria-hidden />
-        {soldOut ? (selected ? "This size is sold out" : "Sold out") : stock <= LOW_STOCK ? `Only ${stock} left — order soon` : "In stock, ready to ship"}
+        {soldOut ? (selected && hasSizes ? "This size is sold out" : "Sold out") : stock <= LOW_STOCK ? `Only ${stock} left — order soon` : "In stock, ready to ship"}
       </p>
 
       <div ref={actionsRef} className="mt-6 flex gap-3">
         <div className="inline-flex h-14 items-center border border-line-strong" role="group" aria-label="Quantity">
-          <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} className="grid h-full w-11 place-items-center disabled:text-ink-3/50" aria-label="Decrease quantity">
+          <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} className="grid h-full w-10 place-items-center disabled:text-ink-3/50 min-[375px]:w-11" aria-label="Decrease quantity">
             <Minus className="size-4" strokeWidth={1.4} />
           </button>
           <span className="w-8 text-center font-ui text-[15px]" aria-live="polite">
             {qty}
           </span>
-          <button type="button" onClick={() => setQty((q) => Math.min(Math.min(20, stock || 1), q + 1))} disabled={qty >= Math.min(20, stock || 1)} className="grid h-full w-11 place-items-center disabled:text-ink-3/50" aria-label="Increase quantity">
+          <button type="button" onClick={() => setQty((q) => Math.min(Math.min(20, stock || 1), q + 1))} disabled={qty >= Math.min(20, stock || 1)} className="grid h-full w-10 place-items-center disabled:text-ink-3/50 min-[375px]:w-11" aria-label="Increase quantity">
             <Plus className="size-4" strokeWidth={1.4} />
           </button>
         </div>
-        <Button size="lg" className="flex-1 !px-4" onClick={() => add(false)} loading={pending} disabled={soldOut}>
+        {/* Narrower qty steps and tracking keep this row inside a 360px screen. */}
+        <Button size="lg" className="min-w-0 flex-1 !px-4 max-[374px]:!px-3 max-[374px]:tracking-[0.1em]" onClick={() => add(false)} loading={pending} disabled={soldOut}>
           {soldOut ? "Sold Out" : "Add to Bag"}
         </Button>
         <WishlistButton productId={product.id} name={product.name} variant="button" />

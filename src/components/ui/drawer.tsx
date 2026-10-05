@@ -37,12 +37,16 @@ export function Drawer({ open, onClose, side = "right", title, hideTitle, childr
 
   useEffect(() => () => void (document.documentElement.style.overflow = ""), []);
 
+  // Top/bottom sheets take their content's height: `h-fit`, because a modal dialog is pinned to
+  // top and bottom, so `h-auto` would stretch it to the max height. The inner column repeats the
+  // cap so long content scrolls inside the sheet rather than overflowing it.
   const position = {
     right: "ml-auto mr-0 w-full max-w-[460px] translate-x-full open:translate-x-0 starting:open:translate-x-full",
     left: "ml-0 mr-auto w-[92vw] max-w-[420px] -translate-x-full open:translate-x-0 starting:open:-translate-x-full",
-    top: "!h-auto max-h-[100dvh] w-full max-w-none -translate-y-full open:translate-y-0 starting:open:-translate-y-full",
-    bottom: "mt-auto !h-auto max-h-[90dvh] w-full max-w-none translate-y-full open:translate-y-0 starting:open:translate-y-full",
+    top: "!h-fit max-h-[100dvh] w-full max-w-none -translate-y-full open:translate-y-0 starting:open:-translate-y-full",
+    bottom: "mt-auto !h-fit max-h-[90dvh] w-full max-w-none translate-y-full open:translate-y-0 starting:open:translate-y-full",
   }[side];
+  const cap = side === "top" ? "max-h-[100dvh]" : side === "bottom" ? "max-h-[90dvh]" : undefined;
 
   return (
     <dialog
@@ -58,7 +62,7 @@ export function Drawer({ open, onClose, side = "right", title, hideTitle, childr
       }}
       className={cn("dialog-drawer", position, className)}
     >
-      <div className="flex h-full flex-col">
+      <div className={cn("flex h-full flex-col", cap)}>
         <div className={cn("flex h-16 shrink-0 items-center justify-between gap-4 border-b border-line px-5 md:h-[72px] md:px-7", hideTitle && "sr-only-heading")}>
           <h2 className={cn("ui-label", hideTitle && "sr-only")}>{title}</h2>
           {headerExtra}

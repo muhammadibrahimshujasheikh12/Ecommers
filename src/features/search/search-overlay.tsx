@@ -170,7 +170,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                     ? visible.products.length
                       ? `Products matching “${term}”`
                       : `No products for “${term}”`
-                    : "Trending now"}
+                    : trending?.length === 0
+                      ? "" // trending picks unavailable: don't label an empty area
+                      : "Trending now"}
               </p>
               {visible && visible.products.length > 0 ? (
                 <button type="button" onClick={() => submit(query)} className="link-underline inline-flex shrink-0 items-center gap-2 font-ui text-[12px] font-medium uppercase tracking-[0.16em]">
