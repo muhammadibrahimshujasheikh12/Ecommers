@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 // Circular with @/lib/data/cart (which dispatches here in demo mode): only use these inside functions.
 import { CartError, COUPON_COOKIE, MAX_LINE_QUANTITY, type RawItem } from "@/lib/data/cart";
+import { isDemoProductLive } from "./catalog";
 import { DEMO_COOKIES } from "./constants";
 import { clearDemoCookie, readDemoCookie, writeDemoCookie } from "./cookies";
 import { demoDb } from "./db";
@@ -33,11 +34,22 @@ type DemoCartLine = z.infer<typeof linesSchema>[number];
 /** Stands in for the cart id handed to clearCart() after checkout. */
 const DEMO_CART_ID = "demo";
 
-/** The bag's lines, oldest first. Lines for products no longer in the catalogue are dropped (like on delete cascade). */
+/** A line can stay in the bag while its product is on sale and the variant still belongs to it. */
+function isBuyable(productId: string, variantId: string | null): boolean {
+  const product = demoDb.product(productId);
+  if (!product || !isDemoProductLive(product)) return false;
+  return variantId === null || demoDb.variant(variantId)?.product_id === productId;
+}
+
+/**
+ * The bag's lines, oldest first. Lines for products no longer in the catalogue
+ * are dropped (like on delete cascade), and so are lines for products the
+ * admin has moved to draft or archived, so they can't be checked out.
+ */
 async function readLines(): Promise<DemoCartLine[]> {
   const lines = await readDemoCookie(DEMO_COOKIES.cart, linesSchema, []);
   return lines
-    .filter((l) => demoDb.product(l.p) && (l.v === null || demoDb.variant(l.v)))
+    .filter((l) => isBuyable(l.p, l.v))
     .map((l) => ({ ...l, q: Math.min(l.q, MAX_LINE_QUANTITY) }));
 }
 
@@ -69,7 +81,7 @@ export async function demoCartCount(): Promise<number> {
 /** Adds an item, validating the product/variant and capping at available stock. */
 export async function demoAddCartItem(productId: string, variantId: string | null, quantity: number) {
   const product = demoDb.product(productId);
-  if (!product) throw new CartError("This item is no longer available.");
+  if (!product || !isDemoProductLive(product)) throw new CartError("This item is no longer available.");
 
   const variants = demoDb.variantsOf(productId);
   if (variants.length && !variantId) throw new CartError("Please select a size.");

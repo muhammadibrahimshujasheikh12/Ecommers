@@ -1,6 +1,17 @@
 import "server-only";
 import { randomInt, randomUUID } from "node:crypto";
 import type { OrderAddress, OrderDetail, OrderStatus, OrderSummary } from "@/types/domain";
+import {
+  adminLiveDemoOrder,
+  adminLiveDemoOrders,
+  findLiveDemoOrderByNumber,
+  findLiveDemoOrderByToken,
+  liveDemoOrderFor,
+  liveDemoOrderNumbers,
+  registerDemoOrder,
+  type DemoLiveOrder,
+  type DemoSeedHistoryEntry,
+} from "./admin-orders";
 import { daysAgo, demoData, demoDb, type DemoSeedOrder } from "./db";
 import { demoCalculateCart } from "./pricing";
 import { getDemoUser } from "./session";
@@ -8,7 +19,6 @@ import {
   addDemoOrder,
   DEMO_MAX_ADDRESSES,
   DEMO_MAX_ORDERS,
-  demoOrdersForCurrentUser,
   fitsDemoAddresses,
   readDemoAddresses,
   readDemoOrders,
@@ -18,10 +28,12 @@ import {
 } from "./store";
 
 /*
- * Demo-mode orders. Orders placed here live in the visitor's own cookie (see
- * ./store.ts); the seeded order history in demoData.orders is shown to anyone
- * signed in with a matching email. Nothing is charged, shipped or emailed and
- * stock is not decremented.
+ * Demo-mode orders. An order placed here is kept in the visitor's own cookie
+ * (see ./store.ts) and registered on the server (./admin-orders.ts) so the
+ * demo admin sees it; reads prefer the server copy, which carries the admin's
+ * latest status. The seeded order history in demoData.orders is shown to
+ * anyone signed in with a matching email. Nothing is charged, shipped or
+ * emailed and stock is not decremented.
  */
 
 /** Shown wherever a shopper may look for an order that has rolled off. */
@@ -87,7 +99,9 @@ export async function placeDemoOrder(args: PlaceDemoOrderArgs): Promise<PlaceDem
   const existing = await readDemoOrders();
   const order: DemoOrder = {
     id: randomUUID(),
-    number: newOrderNumber(new Set([...existing.map((o) => o.number), ...demoData.orders.map((o) => o.order_number)])),
+    number: newOrderNumber(
+      new Set([...existing.map((o) => o.number), ...demoData.orders.map((o) => o.order_number), ...liveDemoOrderNumbers()]),
+    ),
     token: randomUUID(),
     userId: args.userId,
     email: args.email.trim().toLowerCase(),
@@ -112,6 +126,8 @@ export async function placeDemoOrder(args: PlaceDemoOrderArgs): Promise<PlaceDem
 
   // The oldest orders drop off to make room; one too large to keep on its own is refused.
   if (!(await addDemoOrder(order))) return fail("DEMO_ORDER_TOO_LARGE");
+  // Shared with the demo admin (and readable from any browser by its token, like a database row).
+  registerDemoOrder(order);
 
   return {
     data: { order_id: order.id, order_number: order.number, access_token: order.token, total: order.total, status: order.status },
@@ -168,13 +184,22 @@ export async function saveDemoOrderAddress(address: OrderAddress): Promise<void>
 // Reading
 // ---------------------------------------------------------------------------
 
+/** An order with the extra fields the demo admin needs (stripped before customers see it). */
+export type DemoOrderView = OrderDetail & {
+  source: "seed" | "live";
+  userId: string | null;
+  paymentReference: string | null;
+  items: (OrderDetail["items"][number] & { productId: string | null; variantId: string | null })[];
+};
+
 const FLOW: OrderStatus[] = ["confirmed", "processing", "shipped", "delivered"];
 
 /**
- * Demo orders store only their current status. place_order() records a single
- * "Order placed" entry; any later status gets the usual steps up to it.
+ * A cookie copy with no server copy (the server restarted or it rolled off)
+ * stores only its status. place_order() records a single "Order placed"
+ * entry; any later status gets the usual steps up to it.
  */
-function demoHistory(order: DemoOrder): OrderDetail["history"] {
+function synthesizedHistory(order: DemoOrder): OrderDetail["history"] {
   if (order.status === "pending" || order.status === "confirmed") {
     return [{ status: order.status, note: "Order placed", createdAt: order.createdAt }];
   }
@@ -186,15 +211,18 @@ function demoHistory(order: DemoOrder): OrderDetail["history"] {
 }
 
 /** Product details are resolved from the catalogue (demo orders store ids only). */
-function fromDemoOrder(order: DemoOrder): OrderDetail {
+function fromDemoOrder(order: DemoOrder, history: OrderDetail["history"], paymentReference: string | null): DemoOrderView {
   return {
+    source: "live",
     id: order.id,
     orderNumber: order.number,
+    userId: order.userId,
     email: order.email,
     phone: order.phone,
     status: order.status,
     paymentStatus: order.paymentStatus,
     paymentMethod: order.paymentMethod,
+    paymentReference,
     shippingMethodName: order.shippingMethodName,
     subtotal: order.subtotal,
     discount: order.discount,
@@ -212,6 +240,8 @@ function fromDemoOrder(order: DemoOrder): OrderDetail {
       const variant = item.v ? demoDb.variant(item.v) : null;
       return {
         id: `${order.id}-${i}`,
+        productId: item.p,
+        variantId: item.v,
         productName: product?.name ?? "Archived item",
         productSlug: product?.slug ?? null,
         imageUrl: demoDb.imagesOf(item.p)[0]?.url ?? null,
@@ -224,20 +254,36 @@ function fromDemoOrder(order: DemoOrder): OrderDetail {
         lineTotal: item.price * item.q,
       };
     }),
-    history: demoHistory(order),
+    history,
   };
 }
 
+const byTime = (a: { createdAt: string }, b: { createdAt: string }) => a.createdAt.localeCompare(b.createdAt);
+
+/** The server copy: current status, payment and full history. */
+function fromLiveOrder(live: DemoLiveOrder): DemoOrderView {
+  return fromDemoOrder(live.order, [...live.history].sort(byTime), live.paymentReference);
+}
+
+/** A cookie copy, replaced by the server copy when there is one (it has the admin's latest changes). */
+function fromCookieOrder(order: DemoOrder): DemoOrderView {
+  const live = liveDemoOrderFor(order);
+  return live ? fromLiveOrder(live) : fromDemoOrder(order, synthesizedHistory(order), null);
+}
+
 /** Seeded orders carry full item snapshots and history, like the database rows. */
-function fromSeedOrder(order: DemoSeedOrder): OrderDetail {
+function fromSeedOrder(order: DemoSeedOrder): DemoOrderView {
   return {
+    source: "seed",
     id: order.id,
     orderNumber: order.order_number,
+    userId: order.user_id,
     email: order.email,
     phone: order.phone,
     status: order.status,
     paymentStatus: order.payment_status,
     paymentMethod: order.payment_method,
+    paymentReference: order.payment_reference ?? null,
     shippingMethodName: order.shipping_method_name,
     subtotal: order.subtotal,
     discount: order.discount,
@@ -252,6 +298,8 @@ function fromSeedOrder(order: DemoSeedOrder): OrderDetail {
     createdAt: daysAgo(order.created_days_ago),
     items: order.items.map((i) => ({
       id: i.id,
+      productId: i.product_id,
+      variantId: i.variant_id,
       productName: i.product_name,
       productSlug: i.product_slug,
       imageUrl: i.image_url,
@@ -263,9 +311,49 @@ function fromSeedOrder(order: DemoSeedOrder): OrderDetail {
       quantity: i.quantity,
       lineTotal: i.price * i.quantity,
     })),
-    history: [...order.history]
-      .sort((a, b) => b.created_days_ago - a.created_days_ago)
-      .map((h) => ({ status: h.status as OrderStatus, note: h.note, createdAt: daysAgo(h.created_days_ago) })),
+    // Seeded rows are relative ("days ago"); rows the demo admin added carry their real time.
+    history: order.history
+      .map((h: DemoSeedHistoryEntry) => ({ status: h.status as OrderStatus, note: h.note, createdAt: h.at ?? daysAgo(h.created_days_ago) }))
+      .sort(byTime),
+  };
+}
+
+/** What a customer sees: the order without the admin-only fields. */
+function forCustomer(view: DemoOrderView): OrderDetail {
+  return {
+    id: view.id,
+    orderNumber: view.orderNumber,
+    email: view.email,
+    phone: view.phone,
+    status: view.status,
+    paymentStatus: view.paymentStatus,
+    paymentMethod: view.paymentMethod,
+    shippingMethodName: view.shippingMethodName,
+    subtotal: view.subtotal,
+    discount: view.discount,
+    shippingCost: view.shippingCost,
+    tax: view.tax,
+    total: view.total,
+    currency: view.currency,
+    couponCode: view.couponCode,
+    shippingAddress: view.shippingAddress,
+    billingAddress: view.billingAddress,
+    notes: view.notes,
+    createdAt: view.createdAt,
+    items: view.items.map((i) => ({
+      id: i.id,
+      productName: i.productName,
+      productSlug: i.productSlug,
+      imageUrl: i.imageUrl,
+      sku: i.sku,
+      variantName: i.variantName,
+      size: i.size,
+      color: i.color,
+      price: i.price,
+      quantity: i.quantity,
+      lineTotal: i.lineTotal,
+    })),
+    history: view.history,
   };
 }
 
@@ -274,9 +362,9 @@ async function customerOrders(): Promise<OrderDetail[]> {
   const user = await getDemoUser();
   if (!user) return [];
   const email = user.email.toLowerCase();
-  const placed = (await demoOrdersForCurrentUser()).map(fromDemoOrder);
+  const placed = (await readDemoOrders()).filter((o) => o.userId === user.id).map(fromCookieOrder);
   const seeded = demoData.orders.filter((o) => o.email.toLowerCase() === email).map(fromSeedOrder);
-  return [...placed, ...seeded].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return [...placed, ...seeded].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(forCustomer);
 }
 
 export async function demoGetMyOrders(limit: number): Promise<OrderSummary[]> {
@@ -296,13 +384,15 @@ export async function demoGetMyOrder(orderId: string): Promise<OrderDetail | nul
   return (await customerOrders()).find((o) => o.id === orderId) ?? null;
 }
 
-/** Any demo order placed in this browser, or a seeded one. */
+/** A demo order placed in this browser or anywhere on this server, or a seeded one. */
 export async function demoGetOrderByAccessToken(token: string): Promise<OrderDetail | null> {
   const key = token.toLowerCase();
   const placed = (await readDemoOrders()).find((o) => o.token.toLowerCase() === key);
-  if (placed) return fromDemoOrder(placed);
+  if (placed) return forCustomer(fromCookieOrder(placed));
+  const live = findLiveDemoOrderByToken(key);
+  if (live) return forCustomer(fromLiveOrder(live));
   const seeded = demoData.orders.find((o) => o.access_token.toLowerCase() === key);
-  return seeded ? fromSeedOrder(seeded) : null;
+  return seeded ? forCustomer(fromSeedOrder(seeded)) : null;
 }
 
 /** Order number and email must both match (email case-insensitively). */
@@ -311,7 +401,25 @@ export async function demoTrackOrder(orderNumber: string, email: string): Promis
   const mail = email.trim().toLowerCase();
   const matches = (orderNo: string, orderEmail: string) => orderNo.toUpperCase() === number && orderEmail.toLowerCase() === mail;
   const placed = (await readDemoOrders()).find((o) => matches(o.number, o.email));
-  if (placed) return fromDemoOrder(placed);
+  if (placed) return forCustomer(fromCookieOrder(placed));
+  const live = findLiveDemoOrderByNumber(number, mail);
+  if (live) return forCustomer(fromLiveOrder(live));
   const seeded = demoData.orders.find((o) => matches(o.order_number, o.email));
+  return seeded ? forCustomer(fromSeedOrder(seeded)) : null;
+}
+
+// ---------------------------------------------------------------------------
+// Admin reads — call only after requireAdminPage() / requireAdminAction()
+// ---------------------------------------------------------------------------
+
+/** Every order in the demo store: placed on this server by anyone, plus the seeded ones. */
+export function adminDemoOrders(): DemoOrderView[] {
+  return [...adminLiveDemoOrders().map(fromLiveOrder), ...demoData.orders.map(fromSeedOrder)];
+}
+
+export function adminDemoOrder(id: string): DemoOrderView | null {
+  const live = adminLiveDemoOrder(id);
+  if (live) return fromLiveOrder(live);
+  const seeded = demoData.orders.find((o) => o.id === id);
   return seeded ? fromSeedOrder(seeded) : null;
 }

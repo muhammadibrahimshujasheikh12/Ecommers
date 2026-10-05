@@ -11,20 +11,58 @@ import type {
   ProductSummary,
   Swatch,
 } from "@/types/domain";
-import { daysAgo, demoData, demoDb, type DemoCategory, type DemoCollection, type DemoProduct } from "./db";
+import { daysAgo, demoData, demoDataVersion, demoDb, type DemoCategory, type DemoCollection, type DemoProduct } from "./db";
 
 /*
  * Demo-mode catalogue reads over the bundled dataset. Search, facets and
  * suggestions port public.search_products, public.catalog_facets and
  * public.search_catalog (supabase/migrations/20261004000300_functions.sql),
  * so filtering, sorting and pagination behave as they do on the database.
- * Every product, category and collection in the dataset is published, which
- * is what RLS would leave visible to a shopper.
+ *
+ * The demo admin can unpublish rows, so shoppers only see what RLS would
+ * leave visible: active products, and active categories and collections.
+ * Draft and archived products drop out of listings, search, facets,
+ * suggestions, product pages, the sitemap and id/slug look-ups (wishlist,
+ * compare, recently viewed), and the demo bag refuses them.
  */
+
+// ---------------------------------------------------------------------------
+// Visibility
+// ---------------------------------------------------------------------------
+
+/** Optional fields the demo admin may set on product rows. */
+type ProductRow = DemoProduct & { stock_quantity?: number; updated_at?: string };
+
+/** Shoppers only see active products (absent status means active). */
+export const isDemoProductLive = (p: DemoProduct) => (p.status ?? "active") === "active";
+
+/** Categories and collections are published unless switched off. */
+const isPublished = (row: { is_active?: boolean }) => row.is_active !== false;
+
+let liveCache: { version: number; products: DemoProduct[] } | null = null;
+
+/** Active products in dataset order, rebuilt after every admin change. */
+function liveProducts(): DemoProduct[] {
+  const version = demoDataVersion();
+  if (liveCache?.version !== version) liveCache = { version, products: demoData.products.filter(isDemoProductLive) };
+  return liveCache.products;
+}
+
+/** An active product by id, or null. */
+const liveProduct = (id: string) => {
+  const p = demoDb.product(id);
+  return p && isDemoProductLive(p) ? p : null;
+};
+
+/** Published collections of a product, by position in the product. */
+const publishedCollectionsOf = (productId: string) => demoDb.collectionsOf(productId).filter(isPublished);
 
 // ---------------------------------------------------------------------------
 // Rows
 // ---------------------------------------------------------------------------
+
+/** Product-level stock, used only when a product has no variants (the seed keeps stock on variants). */
+const productStock = (p: DemoProduct) => (p as ProductRow).stock_quantity ?? 0;
 
 function cardRow(p: DemoProduct): CardRow {
   const category = demoDb.category(p.category_id);
@@ -34,8 +72,7 @@ function cardRow(p: DemoProduct): CardRow {
     name: p.name,
     price: p.price,
     compare_at_price: p.compare_at_price,
-    // Seeded products keep their stock on variants (product-level stock is 0).
-    stock_quantity: 0,
+    stock_quantity: productStock(p),
     created_at: daysAgo(p.created_days_ago),
     rating_avg: p.rating_avg,
     rating_count: p.rating_count,
@@ -57,8 +94,8 @@ function cardRow(p: DemoProduct): CardRow {
 
 const summaryOf = (p: DemoProduct): ProductSummary => toSummary(cardRow(p));
 
-/** Units available to sell (public.product_available_quantity): variant stock, as product-level stock is 0. */
-const availableQuantity = (p: DemoProduct) => demoDb.stockOf(p.id);
+/** Units available to sell (public.product_available_quantity): variant stock, or product stock without variants. */
+const availableQuantity = (p: DemoProduct) => (demoDb.variantsOf(p.id).length ? demoDb.stockOf(p.id) : productStock(p));
 
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -114,7 +151,7 @@ function searchRows(args: SearchArgs): { rows: DemoProduct[]; total: number } {
   const sizes = args.sizes?.length ? new Set(args.sizes) : null;
   const colors = args.colors?.length ? new Set(args.colors) : null;
 
-  const matches = demoData.products.filter((p) => {
+  const matches = liveProducts().filter((p) => {
     if (term) {
       const hit =
         contains(p.name, term) ||
@@ -124,7 +161,7 @@ function searchRows(args: SearchArgs): { rows: DemoProduct[]; total: number } {
       if (!hit) return false;
     }
     if (categoryIds && !categoryIds.has(p.category_id)) return false;
-    if (collectionSlugs && !demoDb.collectionsOf(p.id).some((c) => collectionSlugs.has(c.slug))) return false;
+    if (collectionSlugs && !publishedCollectionsOf(p.id).some((c) => collectionSlugs.has(c.slug))) return false;
     if (args.minPrice != null && p.price < args.minPrice) return false;
     if (args.maxPrice != null && p.price > args.maxPrice) return false;
     if (args.availability) {
@@ -197,9 +234,9 @@ export function demoFacets(scope: { categories?: string[]; collections?: string[
   const collections = new Map<string, DemoCollection>();
   const categories = new Map<string, DemoCategory>();
   for (const p of base) {
-    for (const c of demoDb.collectionsOf(p.id)) collections.set(c.id, c);
+    for (const c of publishedCollectionsOf(p.id)) collections.set(c.id, c);
     const category = demoDb.category(p.category_id);
-    if (category) categories.set(category.id, category);
+    if (category && isPublished(category)) categories.set(category.id, category);
   }
 
   return {
@@ -215,22 +252,23 @@ export function demoFacets(scope: { categories?: string[]; collections?: string[
 // Products
 // ---------------------------------------------------------------------------
 
-/** Product cards for the given (already de-duplicated) ids, in the same order. */
+/** Active product cards for the given (already de-duplicated) ids, in the same order. */
 export function demoProductsByIds(ids: string[]): ProductSummary[] {
   return ids.flatMap((id) => {
-    const p = demoDb.product(id);
+    const p = liveProduct(id);
     return p ? [summaryOf(p)] : [];
   });
 }
 
-/** Product cards for the given slugs, in the same order. */
+/** Active product cards for the given slugs, in the same order. */
 export function demoProductsBySlugs(slugs: string[]): ProductSummary[] {
   return demoProductsByIds([...new Set(slugs.flatMap((s) => demoDb.productBySlug(s)?.id ?? []))].slice(0, 100));
 }
 
+/** The product page; null (404) for unknown, draft and archived products. */
 export function demoProductBySlug(slug: string): ProductDetail | null {
   const p = demoDb.productBySlug(slug);
-  if (!p) return null;
+  if (!p || !isDemoProductLive(p)) return null;
   const own = demoDb.category(p.category_id);
   const parent = own?.parent_id ? demoDb.category(own.parent_id) : null;
 
@@ -242,18 +280,18 @@ export function demoProductBySlug(slug: string): ProductDetail | null {
     material: p.material,
     careInstructions: p.care_instructions,
     details: Array.isArray(p.details) ? p.details : [],
-    collections: demoDb.collectionsOf(p.id).map(({ name, slug: s }) => ({ name, slug: s })),
+    collections: publishedCollectionsOf(p.id).map(({ name, slug: s }) => ({ name, slug: s })),
     parentCategory: parent ? { name: parent.name, slug: parent.slug } : null,
     salesCount: p.sales_count,
   };
 }
 
-/** For sitemap.xml: newest first. Demo rows are never edited, so updatedAt is the creation time. */
+/** For sitemap.xml: active products, newest first. updatedAt is the last admin edit, else the creation time. */
 export function demoProductSlugs(): { slug: string; updatedAt: string }[] {
-  return [...demoData.products]
+  return [...liveProducts()]
     .sort((a, b) => a.created_days_ago - b.created_days_ago)
     .slice(0, 5000)
-    .map((p) => ({ slug: p.slug, updatedAt: daysAgo(p.created_days_ago) }));
+    .map((p) => ({ slug: p.slug, updatedAt: (p as ProductRow).updated_at ?? daysAgo(p.created_days_ago) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -261,11 +299,15 @@ export function demoProductSlugs(): { slug: string; updatedAt: string }[] {
 // ---------------------------------------------------------------------------
 
 export function demoCategories(): CategorySummary[] {
-  return [...demoData.categories].sort((a, b) => a.position - b.position).map(toCategory);
+  return demoData.categories
+    .filter(isPublished)
+    .sort((a, b) => a.position - b.position)
+    .map(toCategory);
 }
 
 export function demoCollections(): CollectionSummary[] {
-  return [...demoData.collections]
+  return demoData.collections
+    .filter(isPublished)
     .sort((a, b) => a.position - b.position)
     .map((c) => ({ id: c.id, name: c.name, slug: c.slug, description: c.description, imageUrl: c.image_url }));
 }
@@ -279,7 +321,7 @@ export function demoSearchSuggestions(query: string, limit = 6): SearchSuggestio
   if (!term) return { products: [], categories: [], collections: [] };
   const lower = term.toLowerCase();
 
-  const products = demoData.products
+  const products = liveProducts()
     .map((p) => ({ p, category: demoDb.category(p.category_id), score: similarity(p.name, term) }))
     .filter(({ p, category, score }) => contains(p.name, term) || contains(category?.name, term) || score > SIMILARITY_THRESHOLD)
     // Names starting with the term first, then closest match, then best sellers.
@@ -300,9 +342,9 @@ export function demoSearchSuggestions(query: string, limit = 6): SearchSuggestio
       image_url: demoDb.imagesOf(p.id)[0]?.url ?? null,
     }));
 
-  const named = <T extends { name: string; slug: string; position: number }>(rows: T[]) =>
+  const named = <T extends { name: string; slug: string; position: number; is_active?: boolean }>(rows: T[]) =>
     rows
-      .filter((r) => contains(r.name, term))
+      .filter((r) => isPublished(r) && contains(r.name, term))
       .sort((a, b) => a.position - b.position)
       .slice(0, 4)
       .map(({ name, slug }) => ({ name, slug }));

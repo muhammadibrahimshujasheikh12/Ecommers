@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { liveDemoOrderFor } from "./admin-orders";
 import { DEMO_COOKIES } from "./constants";
 import { fitDemoList, fitsDemoCookie, readDemoCookie, writeDemoCookie, writeDemoList } from "./cookies";
 import { demoData } from "./db";
@@ -214,11 +215,16 @@ export async function writeDemoReviews(authorName: string, items: DemoUserReview
 // ---------------------------------------------------------------------------
 
 /**
- * Demo orders the signed-in customer placed in this browser. (Seeded order
- * history in demoData.orders, matched by email, is merged by the orders module.)
+ * Demo orders the signed-in customer placed in this browser, with the latest
+ * status from the server copy when there is one (e.g. cancelled by the demo
+ * admin, so it no longer counts as a purchase). Seeded order history in
+ * demoData.orders, matched by email, is merged by the orders module.
  */
 export async function demoOrdersForCurrentUser(): Promise<DemoOrder[]> {
   const user = await getDemoUser();
   if (!user) return [];
-  return (await readDemoOrders()).filter((o) => o.userId === user.id);
+  return (await readDemoOrders()).filter((o) => o.userId === user.id).map((o) => {
+    const live = liveDemoOrderFor(o);
+    return live ? structuredClone(live.order) : o;
+  });
 }
