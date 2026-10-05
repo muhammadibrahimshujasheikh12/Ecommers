@@ -6,7 +6,7 @@ import type { Profile } from "@/lib/data/account";
 import type { profileSchema, savedAddressSchema } from "@/lib/validation/schemas";
 import type { ActionResult, Address } from "@/types/domain";
 import { daysAgo, demoData, demoDb, type DemoCoupon } from "./db";
-import { demoUserId, getDemoUser, setDemoUser, type DemoUser } from "./session";
+import { DEMO_ADMIN_EMAIL, demoAdminUser, demoUserId, getDemoUser, setDemoUser, type DemoUser } from "./session";
 import {
   DEMO_MAX_ADDRESSES,
   demoOrdersForCurrentUser,
@@ -64,6 +64,11 @@ function firstNameFromEmail(email: string): string {
 
 /** Signs this browser in as the demo customer for `email`. Server Actions only. */
 export async function demoSignIn(email: string): Promise<DemoUser> {
+  if (email === DEMO_ADMIN_EMAIL) {
+    const admin = demoAdminUser();
+    await setDemoUser(admin);
+    return admin;
+  }
   const seeded = seededCustomers.get(email);
   const user: DemoUser = {
     id: demoUserId(email),
@@ -79,7 +84,7 @@ export async function demoSignIn(email: string): Promise<DemoUser> {
 
 /** Creates the demo account and signs in straight away (there is no email to verify). */
 export async function demoRegister(input: { email: string; firstName: string; lastName: string }): Promise<ActionResult<DemoUser>> {
-  if (seededCustomers.has(input.email)) {
+  if (seededCustomers.has(input.email) || input.email === DEMO_ADMIN_EMAIL) {
     return { ok: false, error: "An account with this email already exists. Try signing in instead." };
   }
   const user: DemoUser = {

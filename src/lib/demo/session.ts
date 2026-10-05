@@ -19,9 +19,26 @@ const demoUserSchema = z.object({
   lastName: z.string(),
   phone: z.string().nullable(),
   createdAt: z.iso.datetime(),
+  /** Absent means "customer". */
+  role: z.enum(["customer", "admin"]).optional(),
 });
 
 export type DemoUser = z.infer<typeof demoUserSchema>;
+
+/** Signing in with this address (any password) opens the demo admin. */
+export const DEMO_ADMIN_EMAIL = "admin@auraq.pk";
+
+export function demoAdminUser(): DemoUser {
+  return {
+    id: demoUserId(DEMO_ADMIN_EMAIL),
+    email: DEMO_ADMIN_EMAIL,
+    firstName: "Store",
+    lastName: "Admin",
+    phone: null,
+    createdAt: new Date().toISOString(),
+    role: "admin",
+  };
+}
 
 export function demoUserId(email: string): string {
   const h = createHash("sha1").update(`auraq-demo:${email.trim().toLowerCase()}`).digest("hex");
