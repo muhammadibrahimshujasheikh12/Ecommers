@@ -7,16 +7,14 @@ import { Alert } from "@/components/ui/misc";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { DEMO_MODE } from "@/lib/demo/mode";
 import { DEMO_SAMPLE_EMAIL } from "@/lib/demo/account";
+import { safeNext } from "@/lib/safe-next";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({ title: "Sign in", path: "/login", noIndex: true });
 
-const safe = (next: unknown) =>
-  typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : undefined;
-
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
-  const next = safe(params.next);
+  const next = safeNext(params.next);
   if (await getCurrentUser()) redirect(next ?? "/account");
 
   return (

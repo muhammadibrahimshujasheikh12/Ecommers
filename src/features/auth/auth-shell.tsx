@@ -16,9 +16,10 @@ export function AuthShell({ eyebrow, title, intro, children, footer }: { eyebrow
       </div>
       <div className="relative hidden bg-beige lg:block">
         <Image src="/images/campaigns/story-festive.jpg" alt="" fill sizes="50vw" className="object-cover" priority />
-        <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgb(30_27_25/0.4))] p-12 text-ivory">
+        {/* A taller, deeper scrim keeps the caption legible over the pale hems and trousers in the illustration. */}
+        <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgb(30_27_25/0.4)_40%,rgb(30_27_25/0.7))] p-12 pt-32 text-ivory">
           <p className="eyebrow !text-ivory">Members</p>
-          <p className="mt-3 max-w-sm font-display text-[32px] leading-tight">Early access to new collections and private offers.</p>
+          <p className="mt-3 max-w-sm font-display text-[32px] leading-tight [text-shadow:0_1px_12px_rgb(30_27_25/0.45)]">Early access to new collections and private offers.</p>
         </div>
       </div>
     </div>

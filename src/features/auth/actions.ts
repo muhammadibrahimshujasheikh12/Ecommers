@@ -8,6 +8,7 @@ import { siteUrl } from "@/lib/env";
 import { DEMO_MODE } from "@/lib/demo/mode";
 import { DEMO_PASSWORD_NOTE, demoRegister, demoSignIn } from "@/lib/demo/account";
 import { signOutDemoUser } from "@/lib/demo/session";
+import { safeNext } from "@/lib/safe-next";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -16,11 +17,6 @@ import {
   resetPasswordSchema,
 } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/types/domain";
-
-/** Only allow same-site relative redirects (prevents open redirects). */
-async function safeNext(next: unknown, fallback = "/account"): Promise<string> {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : fallback;
-}
 
 const fieldErrors = (issues: { path: PropertyKey[]; message: string }[]) => {
   const out: Record<string, string[]> = {};
@@ -39,7 +35,7 @@ export async function loginAction(input: unknown, next?: string): Promise<Action
     // Any email and password signs in; nothing is checked or stored.
     const user = await demoSignIn(parsed.data.email);
     await mergeGuestCart(user.id).catch((e) => console.error("Cart merge failed", e));
-    return { ok: true, data: { redirectTo: await safeNext(next) } };
+    return { ok: true, data: { redirectTo: safeNext(next) ?? "/account" } };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -57,7 +53,7 @@ export async function loginAction(input: unknown, next?: string): Promise<Action
   } catch (e) {
     console.error("Cart merge failed", e);
   }
-  return { ok: true, data: { redirectTo: await safeNext(next) } };
+  return { ok: true, data: { redirectTo: safeNext(next) ?? "/account" } };
 }
 
 export async function registerAction(input: unknown): Promise<ActionResult<{ needsVerification: boolean; redirectTo: string }>> {

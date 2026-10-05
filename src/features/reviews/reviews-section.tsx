@@ -5,6 +5,7 @@ import { getMyReview, getProductReviews, REVIEWS_PAGE_SIZE, type ReviewSort } fr
 import { getCurrentUser } from "@/lib/supabase/server";
 import { reviewImagesEnabled } from "@/lib/env";
 import { DEMO_MODE } from "@/lib/demo/mode";
+import { DEMO_REVIEW_MAX_LENGTH } from "@/lib/demo/reviews";
 import { Stars } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { ReviewForm } from "./review-form";
@@ -39,7 +40,10 @@ function ReviewItem({ review }: { review: Review }) {
             <BadgeCheck className="size-3.5" strokeWidth={1.6} /> Verified buyer
           </span>
         )}
-        {review.status !== "approved" && <span className="text-[12px] text-warning">Awaiting moderation — only you can see this</span>}
+        {review.status !== "approved" && (
+          // Nobody moderates demo reviews, so there they simply stay pending (see the note under the form).
+          <span className="text-[12px] text-warning">{DEMO_MODE ? "Pending" : "Awaiting moderation"} — only you can see this</span>
+        )}
       </p>
     </li>
   );
@@ -117,8 +121,18 @@ export async function ReviewsSection({
             {user ? (
               <div className="mt-5">
                 {mine && <p className="mb-4 text-[14px] text-ink-2">You’ve reviewed this product — editing will update your existing review.</p>}
-                <ReviewForm productId={productId} existing={mine} imagesEnabled={reviewImagesEnabled} />
-                {DEMO_MODE && <p className="mt-4 text-[13px] text-ink-3">Demo store — your review is saved in this browser only and isn’t sent for moderation.</p>}
+                <ReviewForm
+                  productId={productId}
+                  existing={mine}
+                  imagesEnabled={reviewImagesEnabled}
+                  demo={DEMO_MODE}
+                  contentMaxLength={DEMO_MODE ? DEMO_REVIEW_MAX_LENGTH : undefined}
+                />
+                {DEMO_MODE && (
+                  <p className="mt-4 text-[13px] text-ink-3">
+                    Demo store — reviews are saved in this browser only, and there’s no moderation team. A review saved after you’ve ordered this piece goes live as a verified review; any other review stays pending, visible only to you.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="mt-4">

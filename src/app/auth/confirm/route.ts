@@ -3,6 +3,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { mergeGuestCart } from "@/lib/data/cart";
 import { DEMO_MODE } from "@/lib/demo/mode";
+import { safeNext } from "@/lib/safe-next";
 
 const OTP_TYPES: EmailOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
 
@@ -14,9 +15,7 @@ const OTP_TYPES: EmailOtpType[] = ["signup", "invite", "magiclink", "recovery", 
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
-  const rawNext = searchParams.get("next") ?? "/account";
-  // "/\host" would resolve to another origin, like "//host".
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\") ? rawNext : "/account";
+  const next = safeNext(searchParams.get("next")) ?? "/account";
   if (DEMO_MODE) return NextResponse.redirect(new URL(next, origin));
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;

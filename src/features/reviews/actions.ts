@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidateTag } from "next/cache";
+import { z } from "zod";
 import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/server";
 import { CATALOG_TAG } from "@/lib/supabase/public";
 import { reviewsTag } from "@/lib/data/reviews";
@@ -101,7 +102,9 @@ export async function submitReviewAction(formData: FormData): Promise<ActionResu
   return { ok: true, data: { status: result.data.status, updated: Boolean(existing) } };
 }
 
+/** Deletes the signed-in customer's own review (the "Delete review" button on the product page). */
 export async function deleteReviewAction(reviewId: string, productId: string): Promise<ActionResult> {
+  if (!z.uuid().safeParse(reviewId).success || !z.uuid().safeParse(productId).success) return { ok: false, error: "We couldn't delete your review." };
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Please sign in." };
   if (DEMO_MODE) {

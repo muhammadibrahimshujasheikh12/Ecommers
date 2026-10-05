@@ -7,7 +7,7 @@ import type { profileSchema, savedAddressSchema } from "@/lib/validation/schemas
 import type { ActionResult, Address } from "@/types/domain";
 import { DEMO_COOKIES } from "./constants";
 import { fitsDemoCookie } from "./cookies";
-import { daysAgo, demoData, demoDb } from "./db";
+import { daysAgo, demoData, demoDb, type DemoCoupon } from "./db";
 import { demoUserId, getDemoUser, setDemoUser, type DemoUser } from "./session";
 import {
   DEMO_MAX_ADDRESSES,
@@ -128,6 +128,14 @@ export async function demoGetAccountStats(userId: string) {
     wishlist: wishlist.filter((id) => demoDb.product(id)).length,
     addresses: addresses.length,
   };
+}
+
+/** A sample coupon while it can be redeemed (within its dates, as checkout checks), for the account welcome panel. */
+export function demoGetCoupon(code: string): DemoCoupon | null {
+  const now = Date.now();
+  const coupon = demoData.coupons.find((c) => c.code.toUpperCase() === code.toUpperCase());
+  if (!coupon || (coupon.starts_at && Date.parse(coupon.starts_at) > now) || (coupon.expires_at && Date.parse(coupon.expires_at) <= now)) return null;
+  return coupon;
 }
 
 // ---------------------------------------------------------------------------

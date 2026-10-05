@@ -3,14 +3,14 @@
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { ImagePlus, Star } from "lucide-react";
 import type { z } from "zod";
 import { reviewSchema, REVIEW_IMAGE_LIMIT, REVIEW_IMAGE_MAX_BYTES, REVIEW_IMAGE_TYPES } from "@/lib/validation/schemas";
 import { Input, Textarea } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/misc";
-import { submitReviewAction } from "./actions";
+import { deleteReviewAction, submitReviewAction } from "./actions";
 import type { Review } from "@/types/domain";
 import { cn } from "@/utils/cn";
 
@@ -49,8 +49,28 @@ function StarInput({ value, onChange, error }: { value: number; onChange: (n: nu
   );
 }
 
-export function ReviewForm({ productId, existing, imagesEnabled }: { productId: string; existing: Review | null; imagesEnabled: boolean }) {
+/** Shown after saving a review that isn't published yet. */
+function pendingMessage(updated: boolean, demo: boolean) {
+  if (!demo) return "Thank you! Your review will appear once it has been checked by our team.";
+  // Nobody moderates demo reviews: only a review saved after a demo order for the piece is published.
+  return `${updated ? "Your review has been updated." : "Thank you! Your review is saved."} It stays pending and only you can see it — order this piece in the demo, then update your review, to post it as verified.`;
+}
+
+export function ReviewForm({
+  productId,
+  existing,
+  imagesEnabled,
+  demo = false,
+  contentMaxLength = 2000,
+}: {
+  productId: string;
+  existing: Review | null;
+  imagesEnabled: boolean;
+  demo?: boolean;
+  contentMaxLength?: number;
+}) {
   const router = useRouter();
+  const [deleting, startDelete] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -61,6 +81,7 @@ export function ReviewForm({ productId, existing, imagesEnabled }: { productId: 
     setValue,
     control,
     setError,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(reviewSchema),
@@ -103,17 +124,38 @@ export function ReviewForm({ productId, existing, imagesEnabled }: { productId: 
           ? res.data.updated
             ? "Your review has been updated."
             : "Thank you! Your review is now live."
-          : "Thank you! Your review will appear once it has been checked by our team.",
+          : pendingMessage(res.data.updated, demo),
     });
     setFiles([]);
     router.refresh();
   });
 
+  const onDelete = () => {
+    if (!existing || !window.confirm("Delete your review? This can’t be undone.")) return;
+    startDelete(async () => {
+      setResult(null);
+      const res = await deleteReviewAction(existing.id, productId);
+      if (!res.ok) return setResult({ tone: "error", message: res.error });
+      reset({ productId, rating: 0, title: "", content: "" });
+      setFiles([]);
+      setResult({ tone: "success", message: res.message ?? "Review deleted." });
+      router.refresh();
+    });
+  };
+
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
       <StarInput value={Number(rating)} onChange={(n) => setValue("rating", n, { shouldValidate: true })} error={errors.rating?.message} />
       <Input label="Review title" required maxLength={120} error={errors.title?.message} {...register("title")} />
-      <Textarea label="Your review" required rows={5} maxLength={2000} hint="Tell others about fit, fabric and how you styled it." error={errors.content?.message} {...register("content")} />
+      <Textarea
+        label="Your review"
+        required
+        rows={5}
+        maxLength={contentMaxLength}
+        hint={`Tell others about fit, fabric and how you styled it.${demo ? ` Up to ${contentMaxLength} characters in the demo store.` : ""}`}
+        error={errors.content?.message}
+        {...register("content")}
+      />
       {imagesEnabled && (
         <div>
           <input ref={fileRef} type="file" accept={REVIEW_IMAGE_TYPES.join(",")} multiple className="sr-only" id="review-images" onChange={(e) => onFiles(e.target.files)} />
@@ -129,9 +171,16 @@ export function ReviewForm({ productId, existing, imagesEnabled }: { productId: 
         </div>
       )}
       {result && <Alert tone={result.tone}>{result.message}</Alert>}
-      <Button type="submit" loading={isSubmitting}>
-        {existing ? "Update review" : "Submit review"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <Button type="submit" loading={isSubmitting} disabled={deleting}>
+          {existing ? "Update review" : "Submit review"}
+        </Button>
+        {existing && (
+          <button type="button" onClick={onDelete} disabled={deleting || isSubmitting} className="font-ui text-[13px] text-sale underline underline-offset-4 disabled:opacity-60">
+            {deleting ? "Deleting…" : "Delete review"}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

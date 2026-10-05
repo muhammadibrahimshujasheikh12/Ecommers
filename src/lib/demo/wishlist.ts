@@ -9,8 +9,13 @@ import { readDemoWishlist, writeDemoWishlist } from "./store";
  * as with Supabase, and are merged in on sign-in.
  */
 
-/** Comfortably inside one cookie (each id is a 36-character uuid; ~70 would fit). */
-const MAX_ITEMS = 60;
+/**
+ * Inside the wishlist cookie's 1,500-character budget (see ./cookies.ts) even
+ * uncompressed: each 36-character uuid adds ~52 base64url characters, so 27 fit.
+ * Staying below that means writeDemoList never evicts a saved piece silently;
+ * the "full" error shows instead.
+ */
+const MAX_ITEMS = 25;
 
 /** Saved ids that still exist in the sample catalogue (a cookie can outlive a regenerated dataset), newest first. */
 export async function demoWishlistIds(): Promise<string[]> {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Heart, MapPin, Package, Ruler, UserRound } from "lucide-react";
 import { Alert } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
+import { WelcomeGift } from "@/features/account/welcome-gift";
 import { StatusPill } from "@/features/orders/order-view";
 import { StreamedSuggestions } from "@/features/recommendations/streamed-suggestions";
 import { getAccountStats } from "@/lib/data/account";
@@ -49,9 +50,7 @@ function WelcomePanel({ wishlist, addresses }: { wishlist: number; addresses: nu
             <p className="mt-4 max-w-md text-ink-2">
               Thank you for joining us. Save the pieces you love, keep your details ready for a quicker checkout, and be the first to see each new collection from our Lahore atelier.
             </p>
-            <p className="mt-5 max-w-md border-l-2 border-charcoal pl-4 font-ui text-[13px] leading-relaxed tracking-[0.02em]">
-              A welcome gift: 10% off your first order over {formatPrice(5000)} with code <strong className="font-semibold tracking-[0.08em]">WELCOME10</strong>.
-            </p>
+            <WelcomeGift className="mt-5" />
             <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
               <ButtonLink href="/shop?sort=newest" className="max-sm:w-full">
                 Explore new arrivals

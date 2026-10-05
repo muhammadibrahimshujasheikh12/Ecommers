@@ -17,9 +17,14 @@ import { demoOrdersForCurrentUser, readDemoReviews, writeDemoReviews, type DemoU
  * database rules: one review per product per customer, verified purchase
  * derived from the customer's orders, verified reviews publish instantly and
  * the rest wait as "pending" (visible to their author only). Photo uploads
- * are disabled in demo mode.
+ * are disabled in demo mode, and a review is kept short enough to share the
+ * cookie with a few others: when it is full, a new review is refused rather
+ * than an older one dropped.
  */
 
+
+/** Longest review text in the demo store (the schema allows 2,000), so one review never fills the cookie. */
+export const DEMO_REVIEW_MAX_LENGTH = 500;
 
 /** Order statuses that count as a purchase (see reviews_before_write). */
 const PURCHASED = new Set(["confirmed", "processing", "shipped", "delivered"]);
@@ -168,18 +173,8 @@ async function hasPurchased(user: DemoUser, productId: string): Promise<boolean>
   return (await demoOrdersForCurrentUser()).some((o) => PURCHASED.has(o.status) && o.items.some((i) => i.p === productId));
 }
 
-/**
- * Drops the customer's oldest other reviews until the cookie fits, so the one
- * just written is never the one lost. Null if that review alone is too large.
- */
-function fitReviews(userId: string, authorName: string, items: DemoUserReview[], keepId: string): DemoUserReview[] | null {
-  const kept = [...items];
-  const fits = () => fitsDemoCookie(DEMO_COOKIES.reviews, { userId, authorName, items: kept });
-  for (let i = kept.length - 1; i >= 0 && !fits(); i--) {
-    if (kept[i].id !== keepId) kept.splice(i, 1);
-  }
-  return fits() ? kept : null;
-}
+/** "A", "A and B", "A, B and C". */
+const listOf = (names: string[]) => (names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : (names[0] ?? ""));
 
 export async function demoSubmitReview(input: {
   productId: string;
@@ -192,6 +187,9 @@ export async function demoSubmitReview(input: {
   if (!demoDb.product(input.productId)) return { ok: false, error: "We couldn't save your review. Please try again." };
 
   const { productId, rating, title, content } = input;
+  if (content.length > DEMO_REVIEW_MAX_LENGTH) {
+    return { ok: false, error: "Please check the highlighted fields.", fieldErrors: { content: [`Reviews in the demo store can be up to ${DEMO_REVIEW_MAX_LENGTH} characters.`] } };
+  }
   const stored = await readDemoReviews();
   const existing = (await myEntries(user)).find((e) => e.productId === productId)?.review;
   // Verified purchase is re-derived on every write, as in the database.
@@ -208,11 +206,20 @@ export async function demoSubmitReview(input: {
   };
   // Edits keep the author name, as the trigger does; a new review uses the current profile name.
   const authorName = existing ? stored.authorName || existing.authorName : authorNameOf(user);
-  const next = [review, ...liveItems(stored.items).filter((r) => r.id !== review.id)].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const others = liveItems(stored.items).filter((r) => r.id !== review.id);
+  const next = [review, ...others].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const fits = (items: DemoUserReview[]) => fitsDemoCookie(DEMO_COOKIES.reviews, { userId: user.id, authorName, items });
 
-  const kept = fitReviews(user.id, authorName, next, review.id);
-  if (!kept) return { ok: false, error: "This review is too long for the demo store. Please shorten it and try again." };
-  await writeDemoReviews(authorName, kept);
+  if (!fits([review])) return { ok: false, error: "This review is too long for the demo store. Please shorten it and try again." };
+  if (!fits(next)) {
+    // Never drop the customer's other reviews to make room; say which ones fill the cookie.
+    const names = listOf(others.map((r) => demoDb.product(r.productId)?.name ?? "another piece"));
+    return {
+      ok: false,
+      error: `The demo store keeps only a few reviews per browser, and your reviews of ${names} fill it. Delete or shorten one of them to save this review.`,
+    };
+  }
+  await writeDemoReviews(authorName, next);
   return { ok: true, data: { status: statusOf(review), updated: Boolean(existing) } };
 }
 
