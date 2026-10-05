@@ -242,7 +242,8 @@ export function CheckoutFlow({ initialCart, user, addresses, paymentOptions }: P
                 <span className={cn("grid size-6 place-items-center rounded-full border text-[11px]", i < step ? "border-charcoal bg-charcoal text-ivory" : i === step ? "border-charcoal" : "border-line-strong")}>
                   {i < step ? <Check className="size-3" strokeWidth={2} /> : i + 1}
                 </span>
-                {label}
+                {/* Below xl only the current step is labelled, so all four fit on one line. */}
+                <span className={cn(i !== step && "max-xl:sr-only")}>{label}</span>
               </button>
             </li>
           ))}

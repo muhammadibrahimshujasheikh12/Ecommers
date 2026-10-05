@@ -31,13 +31,18 @@ export function ShopTheLook({ title, text, image, alt, items }: { title: string;
   const addAll = () =>
     start(async () => {
       let added = 0;
+      const sizes = new Set<string>();
       for (const { product } of available) {
         const v = defaultVariant(product);
-        if (await addItem({ productId: product.id, variantId: v?.id ?? null, quantity: 1 }, { openDrawer: false, silent: true })) added++;
+        if (await addItem({ productId: product.id, variantId: v?.id ?? null, quantity: 1 }, { openDrawer: false, silent: true })) {
+          added++;
+          if (v?.size && v.size !== "One Size") sizes.add(v.size);
+        }
       }
       // One summary toast instead of one per piece.
       if (added) {
-        toast({ message: `${added === 1 ? "1 piece" : `${added} pieces`} added — adjust sizes in your bag`, action: { label: "View bag", onClick: open } });
+        const size = sizes.size === 1 ? ` in size ${[...sizes][0]}` : "";
+        toast({ message: `${added === 1 ? "1 piece" : `${added} pieces`} added${size} — adjust sizes in your bag`, action: { label: "View bag", onClick: open } });
       }
     });
 

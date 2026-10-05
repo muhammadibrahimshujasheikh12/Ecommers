@@ -101,7 +101,7 @@ export async function ReviewsSection({
                   const pct = summary.count ? Math.round((n / summary.count) * 100) : 0;
                   return (
                     <div key={r} className="grid grid-cols-[52px_1fr_36px] items-center gap-3 font-ui text-[13px]">
-                      <dt>{r} stars</dt>
+                      <dt>{r} {r === 1 ? "star" : "stars"}</dt>
                       <dd className="h-1.5 bg-beige">
                         <span className="sr-only">{pct}% of reviews</span>
                         <div aria-hidden className="h-full bg-charcoal" style={{ width: `${pct}%` }} />

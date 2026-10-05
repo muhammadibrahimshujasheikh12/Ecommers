@@ -32,13 +32,16 @@ export function StoreCard({ store }: { store: Store }) {
   const headingId = `${store.id}-name`;
   return (
     <article id={store.id} aria-labelledby={headingId} className="grid scroll-mt-[150px] gap-8 lg:grid-cols-12 lg:items-start lg:gap-12 xl:gap-16">
-      <div className="relative aspect-[4/3] overflow-hidden bg-beige lg:col-span-7 lg:group-even:order-last">
-        <Image src={store.image.src} alt={store.image.alt} fill sizes="(min-width: 1440px) 760px, (min-width: 1024px) 56vw, 100vw" className="object-cover" />
-        {store.flagship && (
-          <Badge tone="new" className="absolute left-3 top-3 md:left-4 md:top-4">
-            Flagship
-          </Badge>
-        )}
+      {/* The photo stays in view beside the (much taller) details column. */}
+      <div className="lg:sticky lg:top-[150px] lg:col-span-7 lg:group-even:order-last">
+        <div className="relative aspect-[4/3] overflow-hidden bg-beige">
+          <Image src={store.image.src} alt={store.image.alt} fill sizes="(min-width: 1440px) 760px, (min-width: 1024px) 56vw, 100vw" className="object-cover" />
+          {store.flagship && (
+            <Badge tone="new" className="absolute left-3 top-3 md:left-4 md:top-4">
+              Flagship
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="lg:col-span-5">

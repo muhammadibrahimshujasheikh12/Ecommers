@@ -270,7 +270,7 @@ Lighter fabrics need lighter handling. Hand wash voile and lawn dupattas on thei
 If you are having an unstitched suit tailored, ask your darzi to pre-wash the fabric before cutting. Lawn can shrink by two to three per cent on its first wash, and pre-washing means the fit you are measured for is the fit you keep. Our in-store [bespoke stitching service](/stores) does this as standard.`,
     shop: {
       title: "Summer Lawn, Made to Last",
-      slugs: ["naubahar", "gul-e-nar", "gulshan", "saba"],
+      slugs: ["naubahar", "gul-e-nar", "tasneem", "marjaan"],
       href: "/collections/seasonal",
       linkLabel: "Shop Summer Lawn Vol. II",
     },

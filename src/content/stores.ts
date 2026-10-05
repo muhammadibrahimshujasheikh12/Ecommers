@@ -168,7 +168,7 @@ export const storesIntro = {
   eyebrow: "Visit Us",
   title: "Our Boutiques",
   text: "Five boutiques in four cities, each with in-store stylists, alterations and the full current season. Come and see the handwork up close.",
-  image: { src: "/images/pages/stores-hero.jpg", alt: "Two models in ivory and rose embroidered suits beneath a softly lit arch" },
+  image: { src: "/images/collections/signature.jpg", alt: "A model in a lavender embroidered suit and sheer dupatta beneath a carved arch" },
 };
 
 export const appointment = {
