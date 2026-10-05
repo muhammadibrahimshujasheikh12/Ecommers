@@ -1,18 +1,19 @@
 import "server-only";
 import { randomInt, randomUUID } from "node:crypto";
 import type { OrderAddress, OrderDetail, OrderStatus, OrderSummary } from "@/types/domain";
-import { DEMO_COOKIES } from "./constants";
-import { writeDemoList } from "./cookies";
 import { daysAgo, demoData, demoDb, type DemoSeedOrder } from "./db";
 import { demoCalculateCart } from "./pricing";
 import { getDemoUser } from "./session";
 import {
   addDemoOrder,
   DEMO_MAX_ADDRESSES,
+  DEMO_MAX_ORDERS,
   demoOrdersForCurrentUser,
+  fitsDemoAddresses,
   readDemoAddresses,
   readDemoOrders,
   writeDemoAddresses,
+  type DemoAddress,
   type DemoOrder,
 } from "./store";
 
@@ -22,6 +23,9 @@ import {
  * signed in with a matching email. Nothing is charged, shipped or emailed and
  * stock is not decremented.
  */
+
+/** Shown wherever a shopper may look for an order that has rolled off. */
+export const DEMO_ORDERS_NOTE = `Demo store — sample orders are kept in this browser only, up to the ${DEMO_MAX_ORDERS} most recent.`;
 
 // ---------------------------------------------------------------------------
 // Placement — mirrors public.place_order()
@@ -106,13 +110,8 @@ export async function placeDemoOrder(args: PlaceDemoOrderArgs): Promise<PlaceDem
     items: calc.lines.map((l) => ({ p: l.product_id, v: l.variant_id, q: l.quantity, price: l.unit_price })),
   };
 
-  await addDemoOrder(order);
-  // The cookie drops the oldest orders to make room; an order too large to fit on its own is not kept at all
-  // (and the earlier ones were dropped trying), so put those back.
-  if (!(await readDemoOrders()).some((o) => o.id === order.id)) {
-    await writeDemoList(DEMO_COOKIES.orders, existing);
-    return fail("DEMO_ORDER_TOO_LARGE");
-  }
+  // The oldest orders drop off to make room; one too large to keep on its own is refused.
+  if (!(await addDemoOrder(order))) return fail("DEMO_ORDER_TOO_LARGE");
 
   return {
     data: { order_id: order.id, order_number: order.number, access_token: order.token, total: order.total, status: order.status },
@@ -143,25 +142,26 @@ export async function findDemoOrderAddress(addressId: string): Promise<OrderAddr
 
 /** Saves a checkout address to the signed-in customer's book (default if it is their first). Server Actions only. */
 export async function saveDemoOrderAddress(address: OrderAddress): Promise<void> {
-  if (!(await getDemoUser())) return;
+  const user = await getDemoUser();
+  if (!user) return;
   const book = await readDemoAddresses();
   if (book.length >= DEMO_MAX_ADDRESSES) return;
-  await writeDemoAddresses([
-    {
-      id: randomUUID(),
-      firstName: address.first_name,
-      lastName: address.last_name,
-      phone: address.phone,
-      addressLine1: address.address_line_1,
-      addressLine2: address.address_line_2 ?? null,
-      city: address.city,
-      province: address.province ?? null,
-      postalCode: address.postal_code ?? null,
-      country: address.country,
-      isDefault: !book.length,
-    },
-    ...book,
-  ]);
+  const saved: DemoAddress = {
+    id: randomUUID(),
+    firstName: address.first_name,
+    lastName: address.last_name,
+    phone: address.phone,
+    addressLine1: address.address_line_1,
+    addressLine2: address.address_line_2 ?? null,
+    city: address.city,
+    province: address.province ?? null,
+    postalCode: address.postal_code ?? null,
+    country: address.country,
+    isDefault: !book.length,
+  };
+  // Skip it rather than let the cookie drop the oldest saved address (possibly the default) to make room.
+  if (!fitsDemoAddresses(user.id, [saved, ...book])) return;
+  await writeDemoAddresses([saved, ...book]);
 }
 
 // ---------------------------------------------------------------------------

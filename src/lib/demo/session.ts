@@ -18,7 +18,7 @@ const demoUserSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   phone: z.string().nullable(),
-  createdAt: z.string(),
+  createdAt: z.iso.datetime(),
 });
 
 export type DemoUser = z.infer<typeof demoUserSchema>;

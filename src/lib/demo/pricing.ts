@@ -5,7 +5,7 @@ import type { CalcResult, PricingOptions } from "@/lib/data/cart";
 import type { CartLineStatus } from "@/types/domain";
 import { demoData, demoDb, type DemoProduct } from "./db";
 import { getDemoUser } from "./session";
-import { readDemoOrders } from "./store";
+import { readDemoCouponUses, readDemoOrders } from "./store";
 
 /*
  * Demo-mode pricing: a line-by-line port of public.calculate_cart()
@@ -38,8 +38,10 @@ async function couponUses(code: string, userId: string | null, email: string | n
   const matches = (orderCode: string | null, orderUserId: string | null, orderEmail: string) =>
     orderCode?.toUpperCase() === code && ((userId !== null && orderUserId === userId) || (mail !== null && orderEmail.toLowerCase() === mail));
   const placed = (await readDemoOrders()).filter((o) => matches(o.coupon, o.userId, o.email)).length;
+  // Orders that have rolled off this browser still count.
+  const rolledOff = (await readDemoCouponUses()).filter((u) => matches(u.code, u.userId, u.email)).length;
   const seeded = demoData.orders.filter((o) => matches(o.coupon_code, o.user_id, o.email)).length;
-  return placed + seeded;
+  return placed + rolledOff + seeded;
 }
 
 /** Authoritative demo pricing for a list of items. Same result shape as the calculate_cart RPC. */
@@ -173,7 +175,8 @@ export async function demoCalculateCart(items: PriceRequest[], input: DemoPricin
 
   // 4. Tax & total -----------------------------------------------------------
   const shipping = selected?.cost ?? 0;
-  const tax = Math.round((subtotal - discount) * taxRate);
+  // round(numeric, 0): toPrecision drops binary noise (1500 × 0.145 = 217.4999…) so halves round up as in SQL.
+  const tax = Math.round(Number(((subtotal - discount) * taxRate).toPrecision(12)));
 
   return {
     lines,

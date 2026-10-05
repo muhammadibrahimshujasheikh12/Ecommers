@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { DEMO_MODE } from "@/lib/demo/mode";
+import { DEMO_ORDERS_NOTE } from "@/lib/demo/orders";
 import { trackOrder } from "@/lib/data/orders";
 import { newsletterSchema, trackOrderSchema } from "@/lib/validation/schemas";
 import type { ActionResult, OrderDetail } from "@/types/domain";
@@ -39,7 +40,10 @@ export async function trackOrderAction(input: unknown): Promise<ActionResult<Pic
   const parsed = trackOrderSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check your details." };
   const order = await trackOrder(parsed.data.orderNumber, parsed.data.email);
-  if (!order) return { ok: false, error: "We couldn't find an order with those details. Please check the order number and email." };
+  if (!order) {
+    const notFound = "We couldn't find an order with those details. Please check the order number and email.";
+    return { ok: false, error: DEMO_MODE ? `${notFound} ${DEMO_ORDERS_NOTE}` : notFound };
+  }
   const { orderNumber, status, createdAt, history, shippingMethodName, items, total } = order;
   return { ok: true, data: { orderNumber, status, createdAt, history, shippingMethodName, items, total } };
 }

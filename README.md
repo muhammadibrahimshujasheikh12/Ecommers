@@ -79,9 +79,11 @@ What works in demo mode:
 - **Accounts:** sign in with **any email and password**; nothing is checked or stored. Sign in as `hira.a@example.com` to see a customer with order history. The profile, address book, wishlist and reviews all work.
 - **Policy pages:** FAQs and the policy pages.
 
-**How it works:** catalogue data is read-only. Each visitor's bag, demo account, addresses, orders, wishlist and reviews are kept in small httpOnly cookies in their own browser. So it works on any host (including Vercel) without a database, and nothing is shared between visitors. Older demo orders roll off once the cookie is full (about the last 2–3 orders). Stock never runs down. Review photos and emails are off.
+**How it works:** catalogue data is read-only. Each visitor's bag, demo account, addresses, orders, wishlist and reviews are kept in small httpOnly cookies in their own browser. So it works on any host (including Vercel) without a database, and nothing is shared between visitors. Each browser keeps its 10 most recent demo orders (older ones roll off), and per-customer coupon limits such as WELCOME10 still hold. Stock never runs down. Review photos and emails are off.
 
 **Deploy a demo:** import the repo into Vercel and deploy with no environment variables. Set `NEXT_PUBLIC_SITE_URL` to the deployed URL for correct canonical links.
+
+**Serve it over HTTPS (or localhost).** A production build marks the demo cookies `Secure`, and browsers drop those over plain `http://` on any host other than localhost, so sign-in and the bag silently stop working. To open a production demo over plain HTTP, for example from a phone on your LAN, set `DEMO_COOKIE_SECURE=false`.
 
 **Switch to a real store:** create a Supabase project, set the variables below and redeploy. Demo mode switches off by itself.
 
@@ -128,6 +130,7 @@ See [`.env.example`](.env.example).
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | public | Anon / publishable key. All access through it is limited by RLS. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **server only** | Used by server code for pricing, checkout, guest order lookup and the newsletter. Never prefix it with `NEXT_PUBLIC_`. |
 | `NEXT_PUBLIC_DEMO_MODE` | public | `true` forces demo mode even when Supabase is configured. NEXT_PUBLIC values are fixed at build time, so rebuild after changing it. |
+| `DEMO_COOKIE_SECURE` | server | Demo mode only. `false` drops the `Secure` flag from the demo cookies so a production build works over plain HTTP (e.g. on a LAN). By default they are `Secure` in production. |
 | `NEXT_PUBLIC_SITE_URL` | public | Canonical origin for metadata, the sitemap and auth email redirects |
 | `PAYMENT_METHODS` | server | Comma-separated payment methods offered at checkout: `cod`, `bank_transfer` |
 | `BANK_TRANSFER_ACCOUNT_TITLE`, `BANK_TRANSFER_BANK_NAME`, `BANK_TRANSFER_IBAN` | server | Bank transfer is offered only when an IBAN is set |

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DEMO_MODE } from "@/lib/demo/mode";
@@ -126,8 +127,8 @@ export async function getMyOrder(orderId: string): Promise<OrderDetail | null> {
   return data ? toDetail(data) : null;
 }
 
-/** Guest confirmation look-up by unguessable access token. */
-export async function getOrderByAccessToken(token: string): Promise<OrderDetail | null> {
+/** Guest confirmation look-up by unguessable access token. Once per request (metadata and page share it). */
+export const getOrderByAccessToken = cache(async (token: string): Promise<OrderDetail | null> => {
   if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
   if (DEMO_MODE) return demoGetOrderByAccessToken(token);
   const admin = createSupabaseAdminClient();
@@ -139,7 +140,7 @@ export async function getOrderByAccessToken(token: string): Promise<OrderDetail 
     .overrideTypes<DetailRow, { merge: false }>();
   if (error) throw new Error(`Could not load order: ${error.message}`);
   return data ? toDetail(data) : null;
-}
+});
 
 /** Public order tracking: requires both order number and the email used. */
 export async function trackOrder(orderNumber: string, email: string): Promise<OrderDetail | null> {

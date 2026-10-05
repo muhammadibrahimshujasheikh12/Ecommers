@@ -99,6 +99,7 @@ export function CheckoutFlow({ initialCart, user, addresses, paymentOptions }: P
   const [step, setStep] = useState(0);
   const [quote, setQuote] = useState(initialCart);
   const [quoting, startQuote] = useTransition();
+  const quoteSeq = useRef(0);
   const [serverError, setServerError] = useState<string | null>(null);
   const [couponInput, setCouponInput] = useState("");
   const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0];
@@ -152,13 +153,16 @@ export function CheckoutFlow({ initialCart, user, addresses, paymentOptions }: P
 
   // Re-price on the server whenever delivery, destination or coupon changes.
   useEffect(() => {
+    const seq = ++quoteSeq.current;
     startQuote(async () => {
       const res = await quoteCheckoutAction({ shippingMethod: shippingMethod || undefined, country, couponCode: couponCode || undefined, email: getValues("email") || undefined });
-      if (!res.ok) return;
+      // Ignore a quote that a newer one has superseded.
+      if (!res.ok || seq !== quoteSeq.current) return;
       setQuote(res.data);
-      if (res.data.shippingMethod && res.data.shippingMethod !== getValues("shippingMethod")) {
-        setValue("shippingMethod", res.data.shippingMethod);
-      }
+      // When the chosen method isn't offered for the destination (e.g. Standard to the UAE), the server
+      // selects none: switch to the first one that is, which re-quotes with it.
+      const resolved = res.data.shippingMethod ?? res.data.shippingMethods[0]?.code ?? "";
+      if (resolved !== getValues("shippingMethod")) setValue("shippingMethod", resolved);
     });
   }, [shippingMethod, country, couponCode, getValues, setValue]);
 
@@ -424,9 +428,9 @@ export function CheckoutFlow({ initialCart, user, addresses, paymentOptions }: P
                 { label: "Delivery", value: methods.find((m) => m.code === shippingMethod)?.name ?? "—", step: 1 },
                 { label: "Payment", value: paymentOptions.find((p) => p.code === values.paymentMethod)?.label ?? "—", step: 2 },
               ].map((row) => (
-                <div key={row.label} className="grid grid-cols-[90px_1fr_auto] items-start gap-4 py-4">
+                <div key={row.label} className="grid grid-cols-[90px_minmax(0,1fr)_auto] items-start gap-4 py-4">
                   <dt className="font-ui text-[12px] uppercase tracking-[0.12em] text-ink-3">{row.label}</dt>
-                  <dd className="text-ink-2">{row.value}</dd>
+                  <dd className="min-w-0 text-ink-2 wrap-anywhere">{row.value}</dd>
                   <dd>
                     <button type="button" onClick={() => goTo(row.step)} className="inline-flex items-center gap-1 font-ui text-[12px] underline underline-offset-4" aria-label={`Edit ${row.label.toLowerCase()}`}>
                       <Pencil className="size-3" strokeWidth={1.5} /> Edit
@@ -500,7 +504,15 @@ export function CheckoutFlow({ initialCart, user, addresses, paymentOptions }: P
                 Back
               </Button>
             </div>
-            {!quote.canCheckout && <p className="mt-3 text-[13px] text-sale">Some items are unavailable. Please review your bag before placing the order.</p>}
+            {!quote.canCheckout && (
+              <p className="mt-3 text-[13px] text-sale">
+                {!quote.lines.length || quote.lines.some((l) => l.status !== "ok")
+                  ? "Some items are unavailable. Please review your bag before placing the order."
+                  : methods.length
+                    ? "Please choose a delivery method before placing your order."
+                    : `We don’t currently ship to ${countryName(country)}. Please choose another destination.`}
+              </p>
+            )}
             {DEMO_MODE && (
               <p className="mt-4 text-[13px] text-ink-3">Demo store — this saves a sample order in your browser only. No payment is taken and nothing is shipped.</p>
             )}

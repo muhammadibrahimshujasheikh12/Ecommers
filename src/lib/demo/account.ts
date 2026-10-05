@@ -5,13 +5,12 @@ import type { z } from "zod";
 import type { Profile } from "@/lib/data/account";
 import type { profileSchema, savedAddressSchema } from "@/lib/validation/schemas";
 import type { ActionResult, Address } from "@/types/domain";
-import { DEMO_COOKIES } from "./constants";
-import { fitsDemoCookie } from "./cookies";
 import { daysAgo, demoData, demoDb, type DemoCoupon } from "./db";
 import { demoUserId, getDemoUser, setDemoUser, type DemoUser } from "./session";
 import {
   DEMO_MAX_ADDRESSES,
   demoOrdersForCurrentUser,
+  fitsDemoAddresses,
   readDemoAddresses,
   readDemoWishlist,
   writeDemoAddresses,
@@ -150,7 +149,6 @@ export async function demoUpdateProfile(input: z.infer<typeof profileSchema>): P
   return { ok: true, data: undefined, message: "Profile saved." };
 }
 
-const fitsInCookie = (userId: string, items: DemoAddress[]) => fitsDemoCookie(DEMO_COOKIES.addresses, { userId, items });
 
 export async function demoSaveAddress(input: z.infer<typeof savedAddressSchema>, addressId?: string): Promise<ActionResult<{ id: string }>> {
   const user = await getDemoUser();
@@ -180,7 +178,14 @@ export async function demoSaveAddress(input: z.infer<typeof savedAddressSchema>,
   };
   const others = book.map((a) => (makeDefault && a.isDefault ? { ...a, isDefault: false } : a));
   const next = existing ? others.map((a) => (a.id === address.id ? address : a)) : [address, ...others];
-  if (!fitsInCookie(user.id, next)) return { ok: false, error: "Your demo address book is full. Remove an address to add another." };
+  if (!fitsDemoAddresses(user.id, next)) {
+    return {
+      ok: false,
+      error: existing
+        ? "This address is too long for the demo store. Please shorten it."
+        : "Your demo address book is full. Remove an address to add another.",
+    };
+  }
 
   await writeDemoAddresses(next);
   revalidatePath("/account/addresses");

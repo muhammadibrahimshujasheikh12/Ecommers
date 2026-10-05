@@ -6,6 +6,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/misc";
 import { StatusPill } from "@/features/orders/order-view";
 import { getMyOrders } from "@/lib/data/orders";
+import { DEMO_MODE } from "@/lib/demo/mode";
+import { DEMO_ORDERS_NOTE } from "@/lib/demo/orders";
 import { formatDate, formatPrice } from "@/utils/format";
 
 export const metadata: Metadata = { title: "My Orders", robots: { index: false } };
@@ -51,6 +53,7 @@ export default async function OrdersPage() {
           Track an order
         </Link>
       </p>
+      {DEMO_MODE && <p className="mt-2 text-[13px] text-ink-3">{DEMO_ORDERS_NOTE}</p>}
     </div>
   );
 }

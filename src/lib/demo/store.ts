@@ -1,7 +1,8 @@
 import "server-only";
 import { z } from "zod";
 import { DEMO_COOKIES } from "./constants";
-import { readDemoCookie, writeDemoList } from "./cookies";
+import { fitDemoList, fitsDemoCookie, readDemoCookie, writeDemoCookie, writeDemoList } from "./cookies";
+import { demoData } from "./db";
 import { getDemoUser } from "./session";
 
 /*
@@ -49,22 +50,67 @@ export const demoOrderSchema = z.object({
   /** null means "same as shipping". */
   bill: orderAddressSchema.nullable(),
   notes: z.string().nullable(),
-  createdAt: z.string(),
+  createdAt: z.iso.datetime(),
   /** Product details are resolved from the static demo catalogue when displayed. */
   items: z.array(z.object({ p: z.string(), v: z.string().nullable(), q: z.number().int().positive(), price: z.number() })),
 });
 
 export type DemoOrder = z.infer<typeof demoOrderSchema>;
 
+/**
+ * A per-customer-limited coupon used on an order that has since rolled off,
+ * kept so the limit still holds (like a coupon_usage row).
+ */
+const couponUseSchema = z.object({ code: z.string(), userId: z.string().nullable(), email: z.string() });
+
+export type DemoCouponUse = z.infer<typeof couponUseSchema>;
+
+type OrdersCookie = { orders: DemoOrder[]; coupons: DemoCouponUse[] };
+
+const ordersCookieSchema = z.union([
+  z.object({ orders: z.array(demoOrderSchema), coupons: z.array(couponUseSchema) }),
+  // Older cookies held just the list.
+  z.array(demoOrderSchema).transform((orders): OrdersCookie => ({ orders, coupons: [] })),
+]);
+
+/** Orders kept per browser; older ones roll off (sooner if the cookie fills up). */
+export const DEMO_MAX_ORDERS = 10;
+const MAX_COUPON_USES = 20;
+
+const readOrdersCookie = () => readDemoCookie<OrdersCookie>(DEMO_COOKIES.orders, ordersCookieSchema, { orders: [], coupons: [] });
+
 /** Every demo order placed in this browser (guest and signed-in), newest first. */
 export async function readDemoOrders(): Promise<DemoOrder[]> {
-  return readDemoCookie(DEMO_COOKIES.orders, z.array(demoOrderSchema), []);
+  return (await readOrdersCookie()).orders;
 }
 
-/** Saves a new order at the front of the list; the oldest drop off if the cookie is full. */
-export async function addDemoOrder(order: DemoOrder): Promise<void> {
-  const orders = await readDemoOrders();
-  await writeDemoList(DEMO_COOKIES.orders, [order, ...orders.filter((o) => o.id !== order.id)]);
+/** Limited coupons used on orders that have rolled off this browser, newest first. */
+export async function readDemoCouponUses(): Promise<DemoCouponUse[]> {
+  return (await readOrdersCookie()).coupons;
+}
+
+const limitedCouponUse = (order: DemoOrder): DemoCouponUse[] => {
+  const code = order.coupon?.toUpperCase();
+  const limited = demoData.coupons.some((c) => c.code.toUpperCase() === code && c.usage_limit_per_customer !== null);
+  return code && limited ? [{ code, userId: order.userId, email: order.email }] : [];
+};
+
+/**
+ * Saves a new order at the front of the list. The oldest drop off past
+ * DEMO_MAX_ORDERS or when the cookie is full. Returns false, changing nothing,
+ * if the order is too large to keep at all.
+ */
+export async function addDemoOrder(order: DemoOrder): Promise<boolean> {
+  const { orders, coupons } = await readOrdersCookie();
+  const all = [order, ...orders.filter((o) => o.id !== order.id)];
+  const wrap = (kept: DemoOrder[]): OrdersCookie => ({
+    orders: kept,
+    coupons: [...all.slice(kept.length).flatMap(limitedCouponUse), ...coupons].slice(0, MAX_COUPON_USES),
+  });
+  const kept = fitDemoList(DEMO_COOKIES.orders, all.slice(0, DEMO_MAX_ORDERS), wrap);
+  if (!kept.length) return false;
+  await writeDemoCookie(DEMO_COOKIES.orders, wrap(kept));
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +143,11 @@ export async function readDemoAddresses(): Promise<DemoAddress[]> {
   if (!user) return [];
   const book = await readDemoCookie(DEMO_COOKIES.addresses, addressBookSchema.nullable(), null);
   return book && book.userId === user.id ? book.items : [];
+}
+
+/** Whether an address book fits in its cookie as is (writeDemoAddresses drops the oldest to make it fit). */
+export function fitsDemoAddresses(userId: string, items: DemoAddress[]): boolean {
+  return fitsDemoCookie(DEMO_COOKIES.addresses, { userId, items });
 }
 
 /** Replaces the signed-in customer's address book. Server Actions only. */
@@ -137,7 +188,7 @@ export const demoReviewSchema = z.object({
   title: z.string(),
   content: z.string(),
   verified: z.boolean(),
-  createdAt: z.string(),
+  createdAt: z.iso.datetime(),
 });
 
 export type DemoUserReview = z.infer<typeof demoReviewSchema>;

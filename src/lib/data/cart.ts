@@ -15,6 +15,7 @@ import {
   demoUpdateCartItemQuantity,
   readDemoCartItems,
 } from "@/lib/demo/cart";
+import { DEMO_COOKIE_SECURE } from "@/lib/demo/cookies";
 import { demoPriceItems } from "@/lib/demo/pricing";
 import type { CartLine, CartView, ShippingOption } from "@/types/domain";
 import type { Json } from "@/types/database";
@@ -34,7 +35,8 @@ export const MAX_LINE_QUANTITY = 20;
 const cookieOptions = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  // The coupon cookie is also used in demo mode, which follows the demo cookies' setting.
+  secure: DEMO_MODE ? DEMO_COOKIE_SECURE : process.env.NODE_ENV === "production",
   path: "/",
   maxAge: 60 * 60 * 24 * 60,
 };

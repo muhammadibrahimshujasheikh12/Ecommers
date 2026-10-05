@@ -10,7 +10,12 @@ import { getPaymentProvider } from "@/lib/payments/registry";
 import { DEMO_MODE } from "@/lib/demo/mode";
 import { formatDate } from "@/utils/format";
 
-export const metadata: Metadata = { title: "Order confirmed", robots: { index: false, follow: false } };
+export async function generateMetadata({ params }: PageProps<"/checkout/confirmation/[token]">): Promise<Metadata> {
+  const order = await getOrderByAccessToken((await params).token);
+  // An unknown token takes its title from ./not-found.tsx instead of "Order confirmed".
+  if (!order) notFound();
+  return { title: order.status === "pending" ? "Order placed" : "Order confirmed", robots: { index: false, follow: false } };
+}
 
 export default async function ConfirmationPage({ params }: PageProps<"/checkout/confirmation/[token]">) {
   const { token } = await params;
