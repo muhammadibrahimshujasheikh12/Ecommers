@@ -6,7 +6,7 @@ export type ButtonVariant = "primary" | "secondary" | "light" | "outline-light" 
 export type ButtonSize = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2.5 whitespace-nowrap font-ui font-medium uppercase tracking-[0.18em] transition-[background-color,color,border-color,opacity] duration-300 ease-[var(--ease-standard)] disabled:cursor-not-allowed disabled:opacity-100 aria-disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2.5 whitespace-nowrap font-ui font-medium uppercase tracking-[0.16em] transition-[background-color,color,border-color,opacity] duration-300 ease-[var(--ease-standard)] disabled:cursor-not-allowed disabled:opacity-100 aria-disabled:pointer-events-none";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
@@ -20,8 +20,8 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-10 px-5 text-[12px]",
-  md: "h-12 px-8 text-[13px]",
+  sm: "h-10 px-5 text-[11px]",
+  md: "h-12 px-8 text-[12px]",
   lg: "h-14 px-10 text-[13px]",
 };
 

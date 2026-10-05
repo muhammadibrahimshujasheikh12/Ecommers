@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { body, display, ui } from "./fonts";
+import { display, sans } from "./fonts";
 import { siteUrl } from "@/lib/env";
 import { site } from "@/content/site";
 import { getCurrentUser } from "@/lib/supabase/server";
@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   ]);
 
   return (
-    <html lang="en-PK" className={`${display.variable} ${ui.variable} ${body.variable}`}>
+    <html lang="en-PK" className={`${display.variable} ${sans.variable}`}>
       <body className="min-h-dvh">
         <a href="#main" className="sr-only z-[200] bg-charcoal px-4 py-3 text-ivory focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
           Skip to content

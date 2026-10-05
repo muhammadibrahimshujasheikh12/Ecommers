@@ -26,21 +26,21 @@ export function AnnouncementBar() {
       onBlur={() => setPaused(false)}
     >
       <div className="container-site grid h-9 grid-cols-[auto_1fr_auto] items-center md:h-10 lg:grid-cols-[1fr_auto_1fr]">
-        <a href={site.contact.phoneHref} className="hidden font-ui text-[12px] tracking-[0.08em] text-ink-2 hover:text-charcoal lg:block">
+        <a href={site.contact.phoneHref} className="hidden whitespace-nowrap font-ui text-[11px] tracking-[0.06em] text-ink-2 hover:text-charcoal xl:block">
           Customer care: {site.contact.phone}
         </a>
         <div className="col-span-3 flex items-center justify-between gap-3 lg:col-span-1 lg:justify-center lg:gap-6">
           <button type="button" onClick={() => go(-1)} aria-label="Previous announcement" className="grid size-8 place-items-center text-ink-2 hover:text-charcoal">
             <ChevronLeft className="size-3.5" strokeWidth={1.6} />
           </button>
-          <p aria-live="polite" className="min-w-0 truncate text-center font-ui text-[12px] tracking-[0.08em] md:text-[13px] lg:min-w-[440px]">
+          <p aria-live="polite" className="min-w-0 truncate text-center font-ui text-[11px] tracking-[0.04em] md:text-[12px] md:tracking-[0.08em] lg:min-w-[440px]">
             {messages[index]}
           </p>
           <button type="button" onClick={() => go(1)} aria-label="Next announcement" className="grid size-8 place-items-center text-ink-2 hover:text-charcoal">
             <ChevronRight className="size-3.5" strokeWidth={1.6} />
           </button>
         </div>
-        <p className="hidden justify-self-end font-ui text-[12px] tracking-[0.08em] text-ink-2 lg:block">Pakistan · PKR Rs.</p>
+        <p className="hidden justify-self-end whitespace-nowrap font-ui text-[11px] tracking-[0.06em] text-ink-2 xl:block">Pakistan · PKR Rs.</p>
       </div>
     </div>
   );

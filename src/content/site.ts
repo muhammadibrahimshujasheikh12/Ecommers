@@ -29,7 +29,7 @@ export const site = {
     pinterest: "https://pinterest.com/auraqofficial",
   },
   announcements: [
-    "Complimentary delivery on orders above Rs. 5,000",
+    "Complimentary delivery over Rs. 5,000",
     "Worldwide shipping to 7 countries",
     "The Festive Edit — now live",
   ],

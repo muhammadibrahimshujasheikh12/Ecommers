@@ -104,7 +104,7 @@ export function Markdown({ source }: { source: string }) {
 export function Logo({ className, small }: { className?: string; small?: boolean }) {
   return (
     <span className={className}>
-      <span className={small ? "block font-display text-[24px] leading-none tracking-[0.3em]" : "block font-display text-[26px] leading-none tracking-[0.32em] md:text-[36px]"}>
+      <span className={small ? "block font-display text-[24px] font-medium leading-none tracking-[0.3em]" : "block font-display text-[26px] font-medium leading-none tracking-[0.32em] md:text-[36px]"}>
         AURAQ
       </span>
       {!small && <span className="mt-1.5 hidden font-ui text-[10px] uppercase tracking-[0.5em] text-ink-2 md:block">Lahore</span>}

@@ -310,7 +310,7 @@ The app deploys to **Vercel** (or any Node host that runs `next start`):
   - Menus and mega-menu features: `src/content/navigation.ts`.
   - Homepage slides and sections: `src/content/home.ts`.
 - **Design tokens:** colours, fonts and utilities are defined in `src/app/globals.css` (`@theme`).
-- **Fonts:** the brand display face is **Bryn Vogue**, a commercial font. Until its licensed `.woff2` is added, Bodoni Moda (OFL) is used as the fallback. To switch, add the font file to `src/app/fonts/` and follow the comment in `src/app/fonts.ts`. Jost (UI) and Open Sans (body) are self-hosted.
+- **Fonts:** **Cormorant Garamond** for headings and **Montserrat** for navigation, labels and body copy. Both are self-hosted, OFL-licensed variable fonts in `src/app/fonts/`. To use a different (e.g. licensed brand) typeface, drop its `.woff2` files into that folder and update `src/app/fonts.ts`; the `--font-display`, `--font-ui` and `--font-body` tokens in `globals.css` pick it up everywhere.
 - **Imagery:** everything in `public/images/` is generated placeholder art (`npm run images:generate`). Before launch, replace it with real photography: product shots in the `product-images` bucket, campaign images in `public/images/` or Storage, and update the URLs in `src/content/home.ts` and the database.
 
 ## Known limitations
@@ -321,4 +321,4 @@ The app deploys to **Vercel** (or any Node host that runs `next start`):
 - **No online card or wallet gateway** is bundled. Only COD and bank transfer are built in; see [Payments](#payments).
 - **Rate limiting** relies on Supabase Auth's built-in limits. Add edge rate limiting (e.g. Vercel Firewall / Upstash) for checkout, newsletter and review endpoints on high-traffic stores.
 - **No Content-Security-Policy header** yet. Add one tailored to your analytics and payment providers.
-- Placeholder imagery and the fallback display font, as noted above.
+- Placeholder imagery, as noted above.

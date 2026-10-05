@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useState, useTransition, type ReactNode } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, SlidersHorizontal } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import type { Facets } from "@/types/domain";
@@ -239,7 +239,7 @@ export function FilterDrawerButton(props: Props) {
           <div className="flex gap-3">
             <Button
               variant="secondary"
-              className="flex-1"
+              className="flex-1 !px-4"
               onClick={() =>
                 update((p) => {
                   for (const k of ["category", "collection", "min", "max", "availability", "size", "color", "rating", "sale"]) p.delete(k);
@@ -248,7 +248,7 @@ export function FilterDrawerButton(props: Props) {
             >
               Clear
             </Button>
-            <Button className="flex-1" loading={pending} onClick={() => setOpen(false)}>
+            <Button className="flex-1 !px-4" loading={pending} onClick={() => setOpen(false)}>
               Show {props.total} {props.total === 1 ? "result" : "results"}
             </Button>
           </div>
@@ -268,15 +268,16 @@ export function SortSelect({ options }: { options: { value: string; label: strin
   return (
     <label className="relative inline-flex min-w-0 items-center">
       <span className="sr-only">Sort products</span>
+      <ArrowDownUp aria-hidden className="pointer-events-none absolute left-3.5 size-4" strokeWidth={1.5} />
       <select
         value={current}
         onChange={(e) => setOne("sort", e.target.value === "featured" ? null : e.target.value)}
         aria-busy={pending}
-        className="h-11 w-full min-w-0 appearance-none truncate border border-line-strong bg-transparent pl-4 pr-10 font-ui text-[12px] font-medium uppercase tracking-[0.12em] focus:border-charcoal focus:outline-none"
+        className="h-11 w-full min-w-0 appearance-none truncate border border-line-strong bg-transparent pl-10 pr-9 font-ui text-[11px] font-medium uppercase tracking-[0.06em] focus:border-charcoal focus:outline-none md:text-[12px] md:tracking-[0.12em]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
-            Sort: {o.label}
+            {o.label}
           </option>
         ))}
       </select>

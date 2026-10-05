@@ -26,9 +26,9 @@
   --color-warning: #8a5a12;
   --color-focus: #8c6b62;
 
-  --font-display: "Bryn Vogue", var(--font-bodoni), "Didot", Georgia, serif;
-  --font-ui: var(--font-jost), "Futura PT", "Futura", ui-sans-serif, sans-serif;
-  --font-body: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Garamond, Georgia, serif;
+  --font-ui: var(--font-montserrat), "Montserrat", ui-sans-serif, sans-serif;
+  --font-body: var(--font-montserrat), "Montserrat", ui-sans-serif, system-ui, sans-serif;
 
   --shadow-soft: 0 6px 20px rgb(42 40 38 / 0.06);
   --shadow-overlay: 0 24px 48px rgb(42 40 38 / 0.1);
@@ -65,6 +65,8 @@
     font-family: var(--font-body);
     font-size: 15px;
     line-height: 1.65;
+    /* Cormorant defaults to old-style figures (1 reads as "I"); prices, stats and dates need lining ones. */
+    font-variant-numeric: lining-nums;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -117,7 +119,7 @@
 
 @utility eyebrow {
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 16px;
   font-weight: 500;
   letter-spacing: 0.2em;
@@ -127,25 +129,25 @@
 
 @utility ui-label {
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 @utility heading-section {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 500;
   font-size: clamp(30px, 2.4vw + 18px, 44px);
   line-height: 1.1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 @utility heading-display {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 500;
   font-size: clamp(48px, 5.2vw + 20px, 104px);
   line-height: 1;
   letter-spacing: -0.01em;
@@ -153,7 +155,7 @@
 
 @utility heading-editorial {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 500;
   font-size: clamp(40px, 3.6vw + 18px, 80px);
   line-height: 1.02;
   letter-spacing: -0.01em;
@@ -161,7 +163,7 @@
 
 @utility heading-page {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 500;
   font-size: clamp(34px, 2.6vw + 20px, 60px);
   line-height: 1.05;
 }
@@ -227,22 +229,23 @@
 /* Rich text for policies, descriptions */
 @utility prose-auraq {
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.75;
   color: var(--color-ink-2);
   & h2 {
     font-family: var(--font-display);
+    font-weight: 600;
     color: var(--color-charcoal);
-    font-size: 28px;
+    font-size: 30px;
     line-height: 1.2;
     margin: 48px 0 16px;
     scroll-margin-top: 140px;
   }
   & h3 {
     font-family: var(--font-ui);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--color-charcoal);
-    font-size: 18px;
+    font-size: 16px;
     margin: 32px 0 8px;
   }
   & p {
