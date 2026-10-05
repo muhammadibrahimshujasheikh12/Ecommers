@@ -120,7 +120,7 @@ const aboutHero = { kind: "scene", bg: "#6F5E54", arch: "#806D62", floor: "#6252
 job("pages/about-hero.jpg", 2400, 1350, aboutHero, { align: "right" });
 job("pages/about-hero-mobile.jpg", 1080, 1620, aboutHero, { portrait: true, compact: true });
 const aboutCta = { kind: "scene", bg: "#5A4C57", arch: "#6A5B67", floor: "#4F424C", garments: ["#E9DCCB", "#B8AEC8"], figures: 2, tone: "dark" };
-job("pages/about-cta.jpg", 2400, 1200, aboutCta, { align: "right" });
+job("pages/about-cta.jpg", 2400, 1300, aboutCta, { align: "right" });
 job("pages/about-cta-mobile.jpg", 1080, 1620, aboutCta, { portrait: true, compact: true });
 job("pages/founder.jpg", 1200, 1500, { kind: "figure", bg: "#EFE6D8", garment: "#F1E7DA", trouser: "#F1E7DA", accent: "#C8A86A", skin: "#B88A6C", alt: true });
 job("pages/atelier.jpg", 1200, 1500, { kind: "flatlay", bg: "#E9DDCB", fabrics: ["#6E2F3A", "#EFE3CF", "#2F5A4C"] });
@@ -144,7 +144,7 @@ job("pages/stores-hero.jpg", 1200, 1500, { kind: "scene", bg: "#E3D3CB", arch: "
 const journalArt = {
   "festive-dupatta": { kind: "scene", bg: "#E8CFC6", arch: "#F0DDD6", floor: "#DCC1B7", garments: ["#F4E8DA"], figures: 1, portrait: true },
   "lawn-care": { kind: "flatlay", bg: "#DFE4D5", fabrics: ["#BFD8D2", "#F2D7CF", "#E9DFB8"] },
-  zardozi: { kind: "figure", bg: "#4A3F3B", garment: "#6E2F3A", trouser: "#E4D8C8", accent: "#C8A86A", long: true, alt: true },
+  zardozi: { kind: "figure", bg: "#4A3F3B", garment: "#2F5A4C", trouser: "#E4D8C8", accent: "#C8A86A", long: true, alt: true },
   "eid-edit": { kind: "scene", bg: "#CDB9A6", arch: "#DCCBBB", floor: "#C1AC98", garments: ["#F2E6D3", "#AFC0CD"], figures: 2, portrait: true },
   "fabric-guide": { kind: "flatlay", bg: "#EFE6D8", fabrics: ["#C7B08F", "#AFC0CD", "#7E6470"] },
 };
@@ -181,9 +181,9 @@ for (const j of pending) {
 
 // Brand icon (monogram)
 if (renderIcon) {
-  const fontPath = path.join(root, "src/app/fonts/bodoni-moda-latin-standard-normal.woff2");
+  const fontPath = path.join(root, "src/app/fonts/cormorant-garamond-latin-wght-normal.woff2");
   await page.setViewportSize({ width: 512, height: 512 });
-  await page.setContent(`<html><head><style>@font-face{font-family:B;src:url(data:font/woff2;base64,${readFileSync(fontPath).toString("base64")})}body{margin:0}</style></head><body><div id="i" style="width:512px;height:512px;background:#2A2826;color:#FBF8F3;display:grid;place-items:center;font:400 330px/1 B"><span style="margin-top:-20px">A</span></div></body></html>`);
+  await page.setContent(`<html><head><style>@font-face{font-family:B;src:url(data:font/woff2;base64,${readFileSync(fontPath).toString("base64")})}body{margin:0}</style></head><body><div id="i" style="width:512px;height:512px;background:#2A2826;color:#FBF8F3;display:grid;place-items:center;font:500 360px/1 B"><span style="margin-top:-30px">A</span></div></body></html>`);
   await page.waitForTimeout(300);
   for (const file of iconFiles) await page.locator("#i").screenshot({ path: file });
 }

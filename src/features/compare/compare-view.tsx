@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { GitCompareArrows, X } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState, Price, Skeleton, Stars } from "@/components/ui/misc";
@@ -90,7 +90,8 @@ const ROWS: { label: string; render: (p: ProductDetail) => React.ReactNode }[] =
   { label: "Care", render: (p) => <span className="text-ink-2">{p.careInstructions}</span> },
 ];
 
-export function CompareView() {
+/** `suggestions` is a server-rendered product rail shown under the empty state. */
+export function CompareView({ suggestions }: { suggestions?: ReactNode }) {
   const ids = compareStore.useStore();
   const [products, setProducts] = useState<ProductDetail[] | null>(null);
   const key = ids.join(",");
@@ -118,9 +119,12 @@ export function CompareView() {
   }
   if (!visible.length) {
     return (
-      <EmptyState icon={<GitCompareArrows className="size-6" strokeWidth={1.2} />} title="Nothing to compare yet" action={<ButtonLink href="/shop">Browse products</ButtonLink>}>
-        Use “Add to compare” on a product page to compare up to {COMPARE_LIMIT} pieces side by side.
-      </EmptyState>
+      <>
+        <EmptyState icon={<GitCompareArrows className="size-6" strokeWidth={1.2} />} title="Nothing to compare yet" action={<ButtonLink href="/shop">Browse products</ButtonLink>}>
+          Use “Add to compare” on a product page to compare up to {COMPARE_LIMIT} pieces side by side — fabric, fit, sizes and price at a glance.
+        </EmptyState>
+        {suggestions}
+      </>
     );
   }
 

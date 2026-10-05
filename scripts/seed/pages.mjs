@@ -229,7 +229,7 @@ Contact us as soon as possible. We can amend orders that have not yet been dispa
 ## Sizing
 
 **How do I choose my size?**
-Each product page includes a size guide with measurements in inches. If you are between sizes, we recommend the larger size for a relaxed fit.
+Each product page includes a size guide with measurements in inches, and our full [Size Guide](/size-guide) explains how to measure. If you are between sizes, we recommend the larger size for a relaxed fit.
 
 **Are your colours accurate?**
 We photograph every piece in natural light. Slight variations can occur due to screen settings and hand-dyeing.

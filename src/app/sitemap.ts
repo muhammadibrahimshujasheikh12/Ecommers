@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/env";
 import { getAllProductSlugs, getCategories, getCollections } from "@/lib/data/catalog";
+import { journalArticles } from "@/content/journal";
 
 export const revalidate = 3600;
 
@@ -10,6 +11,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "", "/shop", "/collections", "/about", "/stores", "/journal", "/size-guide", "/track-order", "/contact", "/faqs",
     "/shipping-policy", "/return-policy", "/cancellation-policy", "/privacy-policy", "/terms-and-conditions",
   ];
+  const journal = journalArticles.map((a) => ({
+    url: `${siteUrl}/journal/${a.slug}`,
+    lastModified: new Date(a.updatedAt ?? a.publishedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
   try {
     const [products, categories, collections] = await Promise.all([getAllProductSlugs(), getCategories(), getCollections()]);
     return [
@@ -17,9 +24,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...categories.map((c) => ({ url: `${siteUrl}/category/${c.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 })),
       ...collections.map((c) => ({ url: `${siteUrl}/collections/${c.slug}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.8 })),
       ...products.map((p) => ({ url: `${siteUrl}/product/${p.slug}`, lastModified: new Date(p.updatedAt), changeFrequency: "weekly" as const, priority: 0.7 })),
+      ...journal,
     ];
   } catch {
     // Catalogue temporarily unreachable: still serve the static pages.
-    return staticPages.map((p) => ({ url: `${siteUrl}${p}`, lastModified: now }));
+    return [...staticPages.map((p) => ({ url: `${siteUrl}${p}`, lastModified: now })), ...journal];
   }
 }

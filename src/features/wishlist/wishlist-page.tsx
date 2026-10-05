@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { Heart, X } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState, Price, Skeleton } from "@/components/ui/misc";
@@ -80,7 +80,8 @@ function WishlistItem({ product }: { product: ProductSummary }) {
   );
 }
 
-export function WishlistPageView() {
+/** `suggestions` is a server-rendered product rail shown under the empty state. */
+export function WishlistPageView({ suggestions }: { suggestions?: ReactNode }) {
   const { ids, isAuthenticated } = useWishlist();
   const [products, setProducts] = useState<ProductSummary[] | null>(null);
   const key = ids.join(",");
@@ -111,18 +112,21 @@ export function WishlistPageView() {
 
   if (!visible.length) {
     return (
-      <EmptyState icon={<Heart className="size-6" strokeWidth={1.2} />} title="Your wishlist is empty" action={<ButtonLink href="/shop?sort=newest">Discover new arrivals</ButtonLink>}>
-        Tap the heart on any piece to save it here.
-        {!isAuthenticated && (
-          <>
-            {" "}
-            <Link href="/login?next=/wishlist" className="underline underline-offset-4">
-              Sign in
-            </Link>{" "}
-            to keep your wishlist across devices.
-          </>
-        )}
-      </EmptyState>
+      <>
+        <EmptyState icon={<Heart className="size-6" strokeWidth={1.2} />} title="Your wishlist is empty" action={<ButtonLink href="/shop?sort=newest">Discover new arrivals</ButtonLink>}>
+          Tap the heart on any piece to save it here.
+          {!isAuthenticated && (
+            <>
+              {" "}
+              <Link href="/login?next=/wishlist" className="underline underline-offset-4">
+                Sign in
+              </Link>{" "}
+              to keep your wishlist across devices.
+            </>
+          )}
+        </EmptyState>
+        {suggestions}
+      </>
     );
   }
 

@@ -7,6 +7,8 @@ import { ProductGrid } from "@/components/product/product-card";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/ui/misc";
 import { buttonClasses } from "@/components/ui/button";
+import { PopularSearchLinks } from "@/features/recommendations/popular-searches";
+import { StreamedSuggestions } from "@/features/recommendations/streamed-suggestions";
 import { FilterDrawerButton, FilterSidebar, SortSelect } from "./filter-panel";
 import type { ProductFilters } from "@/types/domain";
 import { formatPrice } from "@/utils/format";
@@ -105,6 +107,8 @@ export async function ProductListing({
   for (const c of facets.categories) names[`category:${c.slug}`] = c.name;
   for (const c of facets.collections) names[`collection:${c.slug}`] = c.name;
   const active = activeFilterCount(params);
+  // One to three results reads as unfinished; follow them with suggestions.
+  const sparse = page.page === 1 && page.products.length > 0 && page.products.length < 4;
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)] xl:gap-14">
@@ -116,7 +120,7 @@ export async function ProductListing({
           <p className="font-ui text-[13px] tracking-[0.06em] text-ink-2" aria-live="polite">
             {page.total.toLocaleString("en-US")} {page.total === 1 ? "product" : "products"}
           </p>
-          <div className="flex w-full items-center gap-2 sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto">
             <Suspense>
               <FilterDrawerButton facets={facets} hide={hide} total={page.total} activeCount={active} />
               <SortSelect options={SORT_OPTIONS} />
@@ -140,19 +144,28 @@ export async function ProductListing({
                 })
               }
             />
+            {sparse && (
+              <div className="mt-16 md:mt-24">
+                <StreamedSuggestions rail="best" exclude={page.products.map((p) => p.id)} id="listing-suggestions" eyebrow="Keep exploring" title="Best Sellers" href="/shop?sort=best_selling" linkLabel="View all" />
+              </div>
+            )}
           </>
         ) : (
-          <EmptyState
-            icon={<SearchX className="size-6" strokeWidth={1.2} />}
-            title={filters.q ? `No results for “${filters.q}”` : "No products match these filters"}
-            action={
-              <Link href={basePath} className={buttonClasses({ variant: "secondary" })}>
-                {active ? "Clear filters" : "Browse all products"}
-              </Link>
-            }
-          >
-            {filters.q ? "Check the spelling or try a broader term such as “lawn” or “formal”." : "Try removing a filter or widening the price range."}
-          </EmptyState>
+          <>
+            <EmptyState
+              icon={<SearchX className="size-6" strokeWidth={1.2} />}
+              title={filters.q ? `No results for “${filters.q}”` : "No products match these filters"}
+              action={
+                <Link href={basePath} className={buttonClasses({ variant: "secondary" })}>
+                  {active ? "Clear filters" : "Browse all products"}
+                </Link>
+              }
+            >
+              {filters.q ? "Check the spelling or try a broader term such as “lawn” or “formal”." : "Try removing a filter or widening the price range."}
+            </EmptyState>
+            {filters.q && <PopularSearchLinks label="Try a popular search" align="center" className="mx-auto -mt-4 mb-16 max-w-xl md:-mt-8 md:mb-20" />}
+            <StreamedSuggestions rail="best" id="listing-suggestions" eyebrow="You may also like" title="Best Sellers" href="/shop?sort=best_selling" linkLabel="View all" />
+          </>
         )}
       </div>
     </div>

@@ -1,21 +1,43 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, Loader2, Search, X } from "lucide-react";
-import { formatPrice } from "@/utils/format";
+import { MiniProductCard, MiniProductSkeleton, type MiniProduct } from "@/features/recommendations/mini-product-card";
+import { PopularSearchLinks } from "@/features/recommendations/popular-searches";
+import { useTrendingProducts } from "@/features/recommendations/use-trending-products";
 import type { SearchSuggestions } from "@/lib/data/catalog";
 import { cn } from "@/utils/cn";
 
-const TRENDING = ["Festive formals", "Organza", "Lawn", "Co-ord sets", "Luxury pret", "Sharara"];
-const POPULAR = [
+const QUICK_LINKS = [
   { label: "New Arrivals", href: "/shop?sort=newest" },
   { label: "Ready to Wear", href: "/category/ready-to-wear" },
   { label: "Formal", href: "/category/formals" },
   { label: "Best Sellers", href: "/shop?sort=best_selling" },
+  { label: "Size Guide", href: "/size-guide" },
 ];
+
+const RESULT_SIZES = "(min-width: 1024px) 180px, (min-width: 640px) 30vw, 45vw";
+const TRENDING_SIZES = "(min-width: 1440px) 240px, (min-width: 640px) 18vw, 45vw";
+
+function TrendingGrid({ products, onNavigate }: { products: MiniProduct[] | null; onNavigate: () => void }) {
+  return (
+    <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-4" aria-busy={!products || undefined}>
+      {products
+        ? products.map((p) => (
+            <li key={p.id}>
+              <MiniProductCard product={p} sizes={TRENDING_SIZES} onNavigate={onNavigate} />
+            </li>
+          ))
+        : [0, 1, 2, 3].map((i) => (
+            <li key={i}>
+              <MiniProductSkeleton />
+            </li>
+          ))}
+    </ul>
+  );
+}
 
 /** Large overlay on desktop, full screen on mobile, with instant suggestions. */
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -26,6 +48,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [results, setResults] = useState<SearchSuggestions | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const listId = useId();
+  // Best sellers for the idle state, fetched the first time the overlay opens.
+  const trending = useTrendingProducts(open);
 
   useEffect(() => {
     const d = dialogRef.current;
@@ -70,6 +94,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   };
 
   const empty = visible && !visible.products.length && !visible.categories.length && !visible.collections.length;
+  const noProducts = visible && !visible.products.length;
+  const related = visible
+    ? [...visible.categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` })), ...visible.collections.map((c) => ({ label: c.name, href: `/collections/${c.slug}` }))]
+    : [];
+  const showTrending = !visible || noProducts;
+  // Status belongs to the last typed query; ignore it once the field is cleared.
+  const loading = status === "loading" && term.length >= 2;
+  const errored = status === "error" && term.length >= 2;
 
   return (
     <dialog
@@ -102,13 +134,13 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products..."
+            placeholder="Search products…"
             autoComplete="off"
             enterKeyHint="search"
             aria-controls={listId}
             className="min-w-0 flex-1 bg-transparent font-ui text-[22px] font-light tracking-[0.01em] placeholder:text-ink-3 focus:outline-none md:text-[34px]"
           />
-          {status === "loading" && <Loader2 className="size-5 animate-spin text-ink-3" aria-label="Searching" />}
+          {loading && <Loader2 className="size-5 animate-spin text-ink-3" aria-label="Searching" />}
           <button type="button" onClick={onClose} className="grid size-11 place-items-center" aria-label="Close search">
             <X className="size-6" strokeWidth={1.2} />
           </button>
@@ -116,29 +148,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
         <div id={listId} className="mt-8 grid gap-10 md:mt-10 md:grid-cols-12 md:gap-6">
           <aside className={cn("md:col-span-3", visible && "order-2 md:order-none")}>
-            <p className="eyebrow mb-4">Trending searches</p>
-            <ul className="mb-9 flex flex-wrap gap-2">
-              {TRENDING.map((t) => (
-                <li key={t}>
-                  <button
-                    type="button"
-                    onClick={() => setQuery(t)}
-                    className="h-9 rounded-full border border-line-strong px-4 font-ui text-[13px] tracking-[0.04em] transition-colors hover:border-charcoal hover:bg-charcoal hover:text-ivory"
-                  >
-                    {t}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="eyebrow mb-4">{visible?.categories.length || visible?.collections.length ? "Categories & collections" : "Popular"}</p>
+            <PopularSearchLinks onNavigate={onClose} className="mb-9" />
+            <p className="eyebrow mb-4">{related.length ? "Categories & collections" : "Quick links"}</p>
             <ul className="space-y-3">
-              {(visible && (visible.categories.length || visible.collections.length)
-                ? [
-                    ...visible.categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` })),
-                    ...visible.collections.map((c) => ({ label: c.name, href: `/collections/${c.slug}` })),
-                  ]
-                : POPULAR
-              ).map((l) => (
+              {(related.length ? related : QUICK_LINKS).map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} onClick={onClose} className="font-ui text-[16px] hover:text-ink-2">
                     {l.label}
@@ -151,39 +164,50 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           <div className="md:col-span-9">
             <div className="mb-4 flex items-baseline justify-between gap-4">
               <p className="eyebrow" aria-live="polite">
-                {status === "error"
+                {errored
                   ? "Search is unavailable right now"
                   : visible
-                    ? `${visible.products.length ? `Products matching “${term}”` : `No results for “${term}”`}`
-                    : "Start typing to search"}
+                    ? visible.products.length
+                      ? `Products matching “${term}”`
+                      : `No products for “${term}”`
+                    : "Trending now"}
               </p>
-              {visible && visible.products.length > 0 && (
-                <button type="button" onClick={() => submit(query)} className="link-underline inline-flex items-center gap-2 font-ui text-[12px] font-medium uppercase tracking-[0.16em]">
+              {visible && visible.products.length > 0 ? (
+                <button type="button" onClick={() => submit(query)} className="link-underline inline-flex shrink-0 items-center gap-2 font-ui text-[12px] font-medium uppercase tracking-[0.16em]">
                   View all results <ArrowRight className="size-3.5" strokeWidth={1.5} />
                 </button>
+              ) : (
+                !visible && (
+                  <Link href="/shop?sort=best_selling" onClick={onClose} className="link-underline inline-flex shrink-0 items-center gap-2 font-ui text-[12px] font-medium uppercase tracking-[0.16em]">
+                    Best sellers <ArrowRight className="size-3.5" strokeWidth={1.5} />
+                  </Link>
+                )
               )}
             </div>
-            {empty ? (
-              <p className="max-w-md py-6 text-ink-2">
-                We couldn’t find anything for “{term}”. Try a different spelling, or search for “lawn”, “formal” or a colour such as “blush”.
-              </p>
-            ) : (
+
+            {visible && visible.products.length > 0 && (
               <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-6">
-                {visible?.products.map((p) => (
+                {visible.products.map((p) => (
                   <li key={p.id}>
-                    <Link href={`/product/${p.slug}`} onClick={onClose} className="group block">
-                      <div className="relative aspect-[3/4] overflow-hidden bg-beige">
-                        {p.image_url && (
-                          <Image src={p.image_url} alt={p.name} fill sizes="(min-width: 1024px) 180px, 45vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                        )}
-                      </div>
-                      <p className="mt-3 font-ui text-[15px] font-medium leading-snug">{p.name}</p>
-                      <p className="font-ui text-[13px] text-ink-3">{p.category_name}</p>
-                      <p className="mt-1 font-ui text-[14px] tracking-[0.04em]">{formatPrice(p.price)}</p>
-                    </Link>
+                    <MiniProductCard product={p} sizes={RESULT_SIZES} onNavigate={onClose} />
                   </li>
                 ))}
               </ul>
+            )}
+
+            {noProducts && (
+              <p className="max-w-md pb-8 text-ink-2">
+                {empty
+                  ? `We couldn’t find anything for “${term}”. Try a different spelling, or search for “lawn”, “formal” or a colour such as “blush”.`
+                  : `No pieces by that name yet — “${term}” matches the ${related.length === 1 ? "page" : "pages"} listed under Categories & collections.`}
+              </p>
+            )}
+
+            {showTrending && trending?.length !== 0 && (
+              <>
+                {noProducts && <p className="eyebrow mb-4">Trending now</p>}
+                <TrendingGrid products={trending} onNavigate={onClose} />
+              </>
             )}
           </div>
         </div>

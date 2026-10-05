@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Lock, ShoppingBag } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/misc";
@@ -10,7 +10,8 @@ import { CartTotals, CouponForm, FreeShippingProgress } from "./cart-summary";
 import { useCart } from "./cart-provider";
 import type { CartView } from "@/types/domain";
 
-export function CartPageView({ initialCart }: { initialCart: CartView }) {
+/** `suggestions` is a server-rendered product rail shown under the empty state. */
+export function CartPageView({ initialCart, suggestions }: { initialCart: CartView; suggestions?: ReactNode }) {
   const { cart, revision } = useCart();
   // Server-rendered cart until the shopper changes something on this page.
   const [baseRevision] = useState(revision);
@@ -18,13 +19,20 @@ export function CartPageView({ initialCart }: { initialCart: CartView }) {
 
   if (!view.lines.length) {
     return (
-      <EmptyState
-        icon={<ShoppingBag className="size-6" strokeWidth={1.2} />}
-        title="Your bag is empty"
-        action={<ButtonLink href="/shop?sort=newest">Shop new arrivals</ButtonLink>}
-      >
-        Pieces you add to your bag will appear here. Explore the new season or revisit your wishlist.
-      </EmptyState>
+      <>
+        <EmptyState
+          icon={<ShoppingBag className="size-6" strokeWidth={1.2} />}
+          title="Your bag is empty"
+          action={<ButtonLink href="/shop?sort=newest">Shop new arrivals</ButtonLink>}
+        >
+          Pieces you add to your bag will appear here. Explore the new season or revisit your{" "}
+          <Link href="/wishlist" className="underline underline-offset-4">
+            wishlist
+          </Link>
+          .
+        </EmptyState>
+        {suggestions}
+      </>
     );
   }
 

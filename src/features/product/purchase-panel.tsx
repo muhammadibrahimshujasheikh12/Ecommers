@@ -276,6 +276,9 @@ export function PurchasePanel({ product }: { product: ProductDetail }) {
         <div className="p-5 md:p-7">
           <p className="mb-5 text-ink-2">All measurements are in inches.</p>
           <SizeGuideTable />
+          <Link href="/size-guide" className="link-underline ui-label mt-6 inline-block text-[12px]">
+            How to measure &amp; fit notes
+          </Link>
         </div>
       </Drawer>
     </div>

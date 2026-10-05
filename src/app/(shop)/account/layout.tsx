@@ -15,7 +15,7 @@ export default async function AccountLayout({ children }: LayoutProps<"/account"
         <p className="eyebrow">My account</p>
         <p className="heading-page mt-3">Hello{profile.firstName ? `, ${profile.firstName}` : ""}</p>
       </div>
-      <div className="grid gap-10 lg:grid-cols-[240px_1fr] lg:gap-16">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
         <aside>
           <AccountNav />
         </aside>

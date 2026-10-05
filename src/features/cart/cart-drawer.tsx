@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { ButtonLink } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/misc";
+import { MiniProductCard, MiniProductSkeleton } from "@/features/recommendations/mini-product-card";
+import { useTrendingProducts } from "@/features/recommendations/use-trending-products";
 import { formatPrice } from "@/utils/format";
 import { CartLineItem } from "./cart-line-item";
 import { FreeShippingProgress } from "./cart-summary";
@@ -13,6 +16,9 @@ export function CartDrawer() {
   const { isOpen, close, cart, count, isLoading } = useCart();
   const loading = isLoading && !cart;
   const empty = cart && cart.lines.length === 0;
+  // Suggestions for the empty bag. A zero count means the bag is almost
+  // certainly empty, so the request runs alongside the cart fetch, not after it.
+  const picks = useTrendingProducts(isOpen && (count === 0 || Boolean(empty)));
 
   return (
     <Drawer
@@ -53,15 +59,42 @@ export function CartDrawer() {
           ))}
         </div>
       ) : empty || !cart ? (
-        <div className="flex h-full flex-col items-center justify-center px-8 py-16 text-center">
-          <div className="mb-6 grid size-16 place-items-center rounded-full bg-cream">
-            <ShoppingBag className="size-6" strokeWidth={1.2} />
+        <div className="flex min-h-full flex-col">
+          <div className="flex flex-1 flex-col items-center justify-center px-8 pb-10 pt-10 text-center md:pt-12">
+            <div className="mb-6 grid size-16 place-items-center rounded-full bg-cream">
+              <ShoppingBag className="size-6" strokeWidth={1.2} />
+            </div>
+            <p className="font-display text-[28px] leading-tight">Your bag is empty</p>
+            <p className="mt-3 text-ink-2">Discover the new season’s pieces and find something you love.</p>
+            <ButtonLink href="/shop?sort=newest" className="mt-8" onClick={close}>
+              Shop new arrivals
+            </ButtonLink>
           </div>
-          <p className="font-display text-[28px] leading-tight">Your bag is empty</p>
-          <p className="mt-3 text-ink-2">Discover the new season’s pieces and find something you love.</p>
-          <ButtonLink href="/shop?sort=newest" className="mt-8" onClick={close}>
-            Shop new arrivals
-          </ButtonLink>
+          {picks?.length !== 0 && (
+            <section aria-labelledby="bag-drawer-picks" className="border-t border-line px-5 pb-8 pt-7 md:px-7">
+              <div className="mb-5 flex items-baseline justify-between gap-4">
+                <h3 id="bag-drawer-picks" className="ui-label">
+                  You may also like
+                </h3>
+                <Link href="/shop?sort=best_selling" onClick={close} className="link-underline font-ui text-[11px] font-medium uppercase tracking-[0.14em]">
+                  Best sellers
+                </Link>
+              </div>
+              <ul className="grid grid-cols-2 gap-x-3 gap-y-7" aria-busy={!picks || undefined}>
+                {picks
+                  ? picks.map((p) => (
+                      <li key={p.id}>
+                        <MiniProductCard product={p} sizes="(min-width: 460px) 200px, 46vw" onNavigate={close} />
+                      </li>
+                    ))
+                  : [0, 1, 2, 3].map((i) => (
+                      <li key={i}>
+                        <MiniProductSkeleton />
+                      </li>
+                    ))}
+              </ul>
+            </section>
+          )}
         </div>
       ) : (
         <>
