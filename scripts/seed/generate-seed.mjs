@@ -81,7 +81,8 @@ products.forEach((p, i) => {
       const key = `${p.slug}:${color}:${size}`;
       const h = hashInt(key);
       let stock = p.soldOut ? 0 : (h % 14) + 1;
-      if (!p.soldOut && h % 9 === 0) stock = 0; // occasional sold-out size
+      // Occasional sold-out size; not for one-size pieces, where it would sell out a colour or the whole product.
+      if (!p.soldOut && p.sizes.length > 1 && h % 9 === 0) stock = 0;
       if (!p.soldOut && h % 7 === 0) stock = 2; // low stock signal
       const vSku = `${sku}-${colourCode}-${size === "One Size" ? "OS" : size}`;
       emit(`insert into public.product_variants (id, product_id, name, sku, size, color, color_hex, stock_quantity, position) values (${q(uuid(`var:${key}`))}, ${q(p.id)}, ${q(`${color} / ${size}`)}, ${q(vSku)}, ${q(size)}, ${q(color)}, ${q(hex)}, ${stock}, ${pos});`);
@@ -123,20 +124,25 @@ demoUsers.forEach((u, i) => {
 });
 
 const bySlug = Object.fromEntries(products.map((p) => [p.slug, p]));
+const shippingByCode = Object.fromEntries(shippingMethods.map((m) => [m.code, m]));
 let orderSeq = 100001;
 for (const [userIndex, slugs] of verifiedPurchases()) {
   const u = demoUsers[userIndex];
   const orderId = uuid(`order:${u.email}`);
   const items = [...slugs].map((s) => bySlug[s]);
   const subtotal = items.reduce((sum, p) => sum + p.price, 0);
-  const shipping = subtotal >= 5000 ? 0 : 250;
-  const address = { first_name: u.first, last_name: u.last, phone: "+92 300 0000000", address_line_1: "House 1, Street 1", city: u.city, province: null, postal_code: null, country: "PK" };
-  emit(`insert into public.orders (id, user_id, email, phone, status, payment_status, payment_method, shipping_method, shipping_method_name, subtotal, discount, shipping_cost, tax, total, shipping_address, billing_address, created_at) values (${q(orderId)}, ${q(u.id)}, ${q(u.email)}, '+92 300 0000000', 'delivered', 'paid', 'cod', 'standard', 'Standard Delivery', ${subtotal}, 0, ${shipping}, 0, ${subtotal + shipping}, ${json(address)}, ${json(address)}, now() - interval '${40 + userIndex} days');`);
+  const country = u.country ?? "PK";
+  const method = shippingByCode[country === "PK" ? "standard" : "international"];
+  const shipping = method.free !== null && subtotal >= method.free ? 0 : method.price;
+  const payment = country === "PK" ? "cod" : "bank_transfer"; // cash on delivery is nationwide only
+  const phone = u.phone ?? "+92 300 0000000";
+  const address = { first_name: u.first, last_name: u.last, phone, address_line_1: u.address ?? "House 1, Street 1", city: u.city, province: u.province ?? null, postal_code: u.postalCode ?? null, country };
+  emit(`insert into public.orders (id, user_id, email, phone, status, payment_status, payment_method, shipping_method, shipping_method_name, subtotal, discount, shipping_cost, tax, total, shipping_address, billing_address, created_at) values (${q(orderId)}, ${q(u.id)}, ${q(u.email)}, ${q(phone)}, 'delivered', 'paid', ${q(payment)}, ${q(method.code)}, ${q(method.name)}, ${subtotal}, 0, ${shipping}, 0, ${subtotal + shipping}, ${json(address)}, ${json(address)}, now() - interval '${40 + userIndex} days');`);
   const daysAgo = 40 + userIndex;
   const order = {
     id: orderId, order_number: `AQ-${orderSeq++}`, access_token: uuid(`order-token:${u.email}`), user_id: u.id,
-    email: u.email, phone: "+92 300 0000000", status: "delivered", payment_status: "paid", payment_method: "cod",
-    shipping_method: "standard", shipping_method_name: "Standard Delivery", subtotal, discount: 0, shipping_cost: shipping,
+    email: u.email, phone, status: "delivered", payment_status: "paid", payment_method: payment,
+    shipping_method: method.code, shipping_method_name: method.name, subtotal, discount: 0, shipping_cost: shipping,
     tax: 0, total: subtotal + shipping, coupon_code: null, shipping_address: address, billing_address: address, notes: null,
     created_days_ago: daysAgo, items: [],
     history: [

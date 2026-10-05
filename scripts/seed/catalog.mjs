@@ -320,24 +320,26 @@ export const coupons = [
   { code: "FESTIVE1500", description: "Rs. 1,500 off orders over Rs. 15,000", type: "fixed", value: 1500, min: 15000, max: null, perCustomer: null, expires: "2026-12-31T23:59:59+05:00" },
 ];
 
+// address, province, postalCode, phone and country (default "PK") fill each
+// customer's seeded order; orders outside Pakistan use International Shipping.
 export const demoUsers = [
-  { email: "hira.a@example.com", first: "Hira", last: "Ahmed", city: "Lahore" },
-  { email: "sana.k@example.com", first: "Sana", last: "Khan", city: "Karachi" },
-  { email: "maryam.r@example.com", first: "Maryam", last: "Raza", city: "London" },
-  { email: "ayesha.m@example.com", first: "Ayesha", last: "Malik", city: "Islamabad" },
-  { email: "zainab.h@example.com", first: "Zainab", last: "Hussain", city: "Dubai" },
-  { email: "fatima.s@example.com", first: "Fatima", last: "Sheikh", city: "Multan" },
-  { email: "amna.q@example.com", first: "Amna", last: "Qureshi", city: "Faisalabad" },
-  { email: "mahnoor.b@example.com", first: "Mahnoor", last: "Butt", city: "Lahore" },
-  { email: "rabia.c@example.com", first: "Rabia", last: "Chaudhry", city: "Rawalpindi" },
-  { email: "iqra.n@example.com", first: "Iqra", last: "Naqvi", city: "Karachi" },
-  { email: "hafsa.f@example.com", first: "Hafsa", last: "Farooq", city: "Peshawar" },
-  { email: "sadia.j@example.com", first: "Sadia", last: "Javed", city: "Sialkot" },
-  { email: "komal.i@example.com", first: "Komal", last: "Iqbal", city: "Hyderabad" },
-  { email: "areeba.t@example.com", first: "Areeba", last: "Tariq", city: "Karachi" },
-  { email: "laiba.k@example.com", first: "Laiba", last: "Khalid", city: "Lahore" },
-  { email: "mehwish.a@example.com", first: "Mehwish", last: "Akram", city: "Gujranwala" },
-  { email: "saima.r@example.com", first: "Saima", last: "Rehman", city: "Islamabad" },
+  { email: "hira.a@example.com", first: "Hira", last: "Ahmed", city: "Lahore", address: "House 24-B, Street 7, Gulberg III", province: "Punjab", postalCode: "54660", phone: "+92 321 4567890" },
+  { email: "sana.k@example.com", first: "Sana", last: "Khan", city: "Karachi", address: "Plot 31-C, Khayaban-e-Ittehad, DHA Phase 6", province: "Sindh", postalCode: "75500", phone: "+92 300 8241176" },
+  { email: "maryam.r@example.com", first: "Maryam", last: "Raza", city: "London", address: "14 Ealing Road", postalCode: "W5 4QA", country: "GB", phone: "+44 7700 900123" },
+  { email: "ayesha.m@example.com", first: "Ayesha", last: "Malik", city: "Islamabad", address: "House 12, Street 18, F-7/2", province: "Islamabad Capital Territory", postalCode: "44000", phone: "+92 345 5123987" },
+  { email: "zainab.h@example.com", first: "Zainab", last: "Hussain", city: "Dubai", address: "Apt 1203, Marina Gate 2, Dubai Marina", country: "AE", phone: "+971 50 555 0142" },
+  { email: "fatima.s@example.com", first: "Fatima", last: "Sheikh", city: "Multan", address: "House 9, Gulgasht Colony", province: "Punjab", postalCode: "60700", phone: "+92 302 6457812" },
+  { email: "amna.q@example.com", first: "Amna", last: "Qureshi", city: "Faisalabad", address: "House 118, Block D, Peoples Colony No. 1", province: "Punjab", postalCode: "38000", phone: "+92 311 7654320" },
+  { email: "mahnoor.b@example.com", first: "Mahnoor", last: "Butt", city: "Lahore", address: "House 55, Block K, Model Town", province: "Punjab", postalCode: "54700", phone: "+92 322 4419087" },
+  { email: "rabia.c@example.com", first: "Rabia", last: "Chaudhry", city: "Rawalpindi", address: "House 7, Street 12, Bahria Town Phase 4", province: "Punjab", postalCode: "46220", phone: "+92 334 5098761" },
+  { email: "iqra.n@example.com", first: "Iqra", last: "Naqvi", city: "Karachi", address: "Flat B-14, Block 13-D, Gulshan-e-Iqbal", province: "Sindh", postalCode: "75300", phone: "+92 315 2290348" },
+  { email: "hafsa.f@example.com", first: "Hafsa", last: "Farooq", city: "Peshawar", address: "House 21, Street 5, Hayatabad Phase 3", province: "Khyber Pakhtunkhwa", postalCode: "25100", phone: "+92 333 9187453" },
+  { email: "sadia.j@example.com", first: "Sadia", last: "Javed", city: "Sialkot", address: "House 40, Street 2, Defence Road", province: "Punjab", postalCode: "51310", phone: "+92 303 6129875" },
+  { email: "komal.i@example.com", first: "Komal", last: "Iqbal", city: "Hyderabad", address: "House 16, Unit 6, Latifabad", province: "Sindh", postalCode: "71000", phone: "+92 300 3015642" },
+  { email: "areeba.t@example.com", first: "Areeba", last: "Tariq", city: "Karachi", address: "House 88, Block 2, PECHS", province: "Sindh", postalCode: "75400", phone: "+92 321 2765098" },
+  { email: "laiba.k@example.com", first: "Laiba", last: "Khalid", city: "Lahore", address: "House 302, Block G, Johar Town", province: "Punjab", postalCode: "54782", phone: "+92 336 4876210" },
+  { email: "mehwish.a@example.com", first: "Mehwish", last: "Akram", city: "Gujranwala", address: "House 14, Block C, Satellite Town", province: "Punjab", postalCode: "52250", phone: "+92 300 6458213" },
+  { email: "saima.r@example.com", first: "Saima", last: "Rehman", city: "Islamabad", address: "House 3, Street 31, G-10/1", province: "Islamabad Capital Territory", postalCode: "44000", phone: "+92 345 5307719" },
 ];
 
 // [userIndex, productSlug, rating, title, content, verified] — one review per

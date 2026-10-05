@@ -24,18 +24,20 @@ export function ShopTheLook({ title, text, image, alt, items }: { title: string;
   const { addItem, open } = useCart();
   const toast = useToast();
   const [pending, start] = useTransition();
-  const total = items.reduce((s, i) => s + i.product.price, 0);
   const available = items.filter((i) => i.product.inStock);
+  // Only what "Add All" can actually put in the bag.
+  const total = available.reduce((s, i) => s + i.product.price, 0);
 
   const addAll = () =>
     start(async () => {
       let added = 0;
       for (const { product } of available) {
         const v = defaultVariant(product);
-        if (await addItem({ productId: product.id, variantId: v?.id ?? null, quantity: 1 }, { openDrawer: false })) added++;
+        if (await addItem({ productId: product.id, variantId: v?.id ?? null, quantity: 1 }, { openDrawer: false, silent: true })) added++;
       }
+      // One summary toast instead of one per piece.
       if (added) {
-        toast({ message: `${added} pieces added in size M — adjust sizes in your bag`, action: { label: "View bag", onClick: open } });
+        toast({ message: `${added === 1 ? "1 piece" : `${added} pieces`} added — adjust sizes in your bag`, action: { label: "View bag", onClick: open } });
       }
     });
 
@@ -54,7 +56,7 @@ export function ShopTheLook({ title, text, image, alt, items }: { title: string;
               onBlur={() => setActive(null)}
               style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
               className="group absolute -translate-x-1/2 -translate-y-1/2"
-              aria-label={`${i + 1}: ${product.name}, ${formatPrice(product.price)}`}
+              aria-label={`${i + 1}: ${product.name}, ${formatPrice(product.price)}${product.inStock ? "" : ", sold out"}`}
             >
               <span
                 className={cn(
@@ -101,6 +103,7 @@ export function ShopTheLook({ title, text, image, alt, items }: { title: string;
                   <p className="font-ui text-[15px] font-medium">{product.name}</p>
                   <p className="font-ui text-[13px] text-ink-3">{product.category?.name}</p>
                   <p className="mt-1.5 font-ui text-[15px]">{formatPrice(product.price)}</p>
+                  {!product.inStock && <p className="font-ui text-[12px] uppercase tracking-[0.12em] text-sale">Sold out</p>}
                   <Link href={`/product/${product.slug}`} className="link-underline ui-label mt-2 inline-flex items-center gap-2 text-[11px]">
                     View Product <ArrowRight className="size-3.5" strokeWidth={1.4} />
                   </Link>
@@ -108,12 +111,13 @@ export function ShopTheLook({ title, text, image, alt, items }: { title: string;
               </li>
             ))}
           </ul>
-          <div className="flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
+          {/* Side by side only at xl: the column is too narrow for both at md/lg. */}
+          <div className="flex flex-col gap-4 border-t border-line pt-6 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <p className="eyebrow">Complete look</p>
-              <p className="mt-1.5 font-ui text-[22px] tracking-[0.02em]">{formatPrice(total)}</p>
+              <p className="mt-1.5 whitespace-nowrap font-ui text-[22px] tracking-[0.02em]">{available.length ? formatPrice(total) : "Sold out"}</p>
             </div>
-            <Button onClick={addAll} loading={pending} disabled={!available.length} className="max-sm:w-full">
+            <Button onClick={addAll} loading={pending} disabled={!available.length} className="max-xl:w-full">
               Add All to Bag
             </Button>
           </div>

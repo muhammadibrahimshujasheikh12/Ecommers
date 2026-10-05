@@ -6,6 +6,12 @@ import { addToCartAction, getCartAction } from "./actions";
 import type { CartView } from "@/types/domain";
 
 type AddInput = { productId: string; variantId: string | null; quantity: number };
+type AddOptions = {
+  /** Open the bag drawer (default); when false, a toast confirms the add instead. */
+  openDrawer?: boolean;
+  /** Skip that confirmation toast, e.g. when the caller sums up several adds itself. Errors still toast. */
+  silent?: boolean;
+};
 
 type CartContextValue = {
   count: number;
@@ -17,7 +23,7 @@ type CartContextValue = {
   open: () => void;
   close: () => void;
   setCart: (cart: CartView) => void;
-  addItem: (input: AddInput, options?: { openDrawer?: boolean }) => Promise<boolean>;
+  addItem: (input: AddInput, options?: AddOptions) => Promise<boolean>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -55,7 +61,7 @@ export function CartProvider({ initialCount, children }: { initialCount: number;
   const close = useCallback(() => setOpen(false), []);
 
   const addItem = useCallback(
-    async (input: AddInput, options: { openDrawer?: boolean } = {}) => {
+    async (input: AddInput, options: AddOptions = {}) => {
       const result = await addToCartAction(input);
       if (!result.ok) {
         toast({ tone: "error", message: result.error });
@@ -63,7 +69,7 @@ export function CartProvider({ initialCount, children }: { initialCount: number;
       }
       setCart(result.data.cart);
       if (options.openDrawer !== false) setOpen(true);
-      else toast({ message: result.data.message, action: { label: "View bag", onClick: () => setOpen(true) } });
+      else if (!options.silent) toast({ message: result.data.message, action: { label: "View bag", onClick: () => setOpen(true) } });
       return true;
     },
     [setCart, toast],

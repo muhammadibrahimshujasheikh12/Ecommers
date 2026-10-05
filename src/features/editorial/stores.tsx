@@ -31,7 +31,7 @@ export const mapsUrl = (store: Store) => `https://www.google.com/maps/search/?ap
 export function StoreCard({ store }: { store: Store }) {
   const headingId = `${store.id}-name`;
   return (
-    <article id={store.id} aria-labelledby={headingId} className="grid scroll-mt-[150px] gap-8 lg:grid-cols-12 lg:items-center lg:gap-12 xl:gap-16">
+    <article id={store.id} aria-labelledby={headingId} className="grid scroll-mt-[150px] gap-8 lg:grid-cols-12 lg:items-start lg:gap-12 xl:gap-16">
       <div className="relative aspect-[4/3] overflow-hidden bg-beige lg:col-span-7 lg:group-even:order-last">
         <Image src={store.image.src} alt={store.image.alt} fill sizes="(min-width: 1440px) 760px, (min-width: 1024px) 56vw, 100vw" className="object-cover" />
         {store.flagship && (
@@ -50,7 +50,7 @@ export function StoreCard({ store }: { store: Store }) {
         </h2>
         <p className="mt-4 max-w-lg text-[15px] leading-[1.75] text-ink-2">{store.description}</p>
 
-        <div className="mt-8 grid gap-6 border-t border-line pt-6 sm:grid-cols-2">
+        <div className="mt-8 grid gap-6 border-t border-line pt-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           <div>
             <h3 className="ui-label text-[11px] text-ink-2">Address</h3>
             <address className="mt-3 flex gap-2.5 text-[14px] not-italic leading-relaxed">
@@ -80,7 +80,7 @@ export function StoreCard({ store }: { store: Store }) {
                 </a>
               </li>
               <li>
-                <a href={`mailto:${store.email}`} className="inline-flex items-center gap-2.5 break-all hover:underline hover:underline-offset-4">
+                <a href={`mailto:${store.email}`} className="inline-flex items-center gap-2.5 wrap-anywhere hover:underline hover:underline-offset-4">
                   <Mail className="size-4 shrink-0" strokeWidth={1.3} aria-hidden />
                   <span className="sr-only">Email {store.name}: </span>
                   {store.email}
@@ -125,13 +125,14 @@ export function StoreCard({ store }: { store: Store }) {
           })}
         </ul>
 
-        <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+        {/* Wraps: the narrow lg column can't fit both on one line. */}
+        <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
           <a href={mapsUrl(store)} target="_blank" rel="noopener noreferrer" className={buttonClasses({ className: "max-sm:w-full" })}>
             Get Directions
             <ArrowUpRight className="size-4" strokeWidth={1.4} aria-hidden />
             <span className="sr-only">to {store.name} (opens Google Maps in a new tab)</span>
           </a>
-          <a href={store.phoneHref} className={buttonClasses({ variant: "text", className: "self-center" })}>
+          <a href={store.phoneHref} className={buttonClasses({ variant: "text", className: "max-sm:mx-auto" })}>
             Call the Boutique<span className="sr-only">: {store.phone}</span>
           </a>
         </div>
@@ -173,8 +174,8 @@ export function AppointmentBand() {
   const a = appointment;
   return (
     <section aria-labelledby="appointment-heading" className="bg-blush py-16 md:py-24">
-      <div className="container-site reveal grid gap-12 md:grid-cols-12 md:gap-8">
-        <div className="md:col-span-7 lg:col-span-6">
+      <div className="container-site reveal grid gap-12 lg:grid-cols-12 lg:gap-8">
+        <div className="lg:col-span-6">
           <p className="eyebrow">{a.eyebrow}</p>
           <h2 id="appointment-heading" className="heading-page mt-4">
             {a.title}
@@ -184,7 +185,7 @@ export function AppointmentBand() {
             Request an Appointment
           </ButtonLink>
         </div>
-        <div className="border-t border-charcoal/15 pt-10 md:col-span-5 md:border-l md:border-t-0 md:pl-10 md:pt-0 lg:col-start-8 lg:pl-14">
+        <div className="border-t border-charcoal/15 pt-10 lg:col-span-5 lg:col-start-8 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
           <h3 className="font-display text-[28px] leading-tight md:text-[32px]">{a.virtualTitle}</h3>
           <p className="mt-3 text-[15px] leading-[1.8] text-ink-2">{a.virtualText}</p>
           <a href={site.contact.whatsapp} target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "secondary", className: "mt-7 max-md:w-full" })}>
