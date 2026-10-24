@@ -56,7 +56,7 @@ export default async function AdminCustomerPage({ params }: Props) {
       />
       <div className="space-y-6">
         <CustomerStats detail={detail} />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <CustomerOrdersPanel detail={detail} />
           <div className="space-y-6">
             <CustomerContactPanel detail={detail} demo={DEMO_MODE} />

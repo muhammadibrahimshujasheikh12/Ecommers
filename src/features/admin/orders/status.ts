@@ -84,9 +84,9 @@ export const ORDER_STATUS_HINTS: Record<OrderStatus, string> = {
   processing: "Being prepared and packed.",
   shipped: "Handed to the courier.",
   delivered: "Received by the customer.",
-  cancelled: "Stops the order. Reserved stock goes back on sale. This can’t be undone.",
+  cancelled: "Stopped before shipping. Final — it can’t be reopened.",
   returned: "The customer sent the items back.",
-  refunded: "The order was refunded. This can’t be undone.",
+  refunded: "The customer was refunded. Final — it can’t be changed.",
 };
 
 export const ORDER_SORTS = ["newest", "oldest", "total_desc", "total_asc"] as const;

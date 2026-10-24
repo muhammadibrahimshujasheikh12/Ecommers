@@ -21,18 +21,12 @@ const count = (n: number) => n.toLocaleString("en-US");
 // ---------------------------------------------------------------------------
 
 function Delta({ current, previous, period }: { current: number; previous: number; period: string }) {
-  let tone: "up" | "down" | "flat" | "new" = "flat";
-  let text = "No change";
-  if (previous === 0 && current > 0) {
-    tone = "new";
-    text = "New";
-  } else if (previous > 0) {
-    const pct = ((current - previous) / previous) * 100;
-    const rounded = Math.abs(pct) < 10 ? Math.round(pct * 10) / 10 : Math.round(pct);
-    if (rounded > 0) tone = "up";
-    else if (rounded < 0) tone = "down";
-    text = rounded === 0 ? "No change" : `${rounded > 0 ? "+" : "−"}${Math.abs(rounded).toLocaleString("en-US")}%`;
+  if (previous === 0) {
+    return <p className="mt-3 text-[12.5px] text-ink-3">{current > 0 ? `None in the ${period}` : `Same as the ${period}`}</p>;
   }
+  const pct = ((current - previous) / previous) * 100;
+  const rounded = Math.abs(pct) < 10 ? Math.round(pct * 10) / 10 : Math.round(pct);
+  const tone = rounded > 0 ? "up" : rounded < 0 ? "down" : "flat";
   const Icon = tone === "up" ? ArrowUpRight : tone === "down" ? ArrowDownRight : Minus;
   return (
     <p className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12.5px]">
@@ -41,11 +35,11 @@ function Delta({ current, previous, period }: { current: number; previous: numbe
           "inline-flex items-center gap-0.5 font-medium",
           tone === "up" && "text-success",
           tone === "down" && "text-sale",
-          (tone === "flat" || tone === "new") && "text-ink-2",
+          tone === "flat" && "text-ink-2",
         )}
       >
-        {tone !== "new" && <Icon aria-hidden className="size-3.5" strokeWidth={2} />}
-        {text}
+        <Icon aria-hidden className="size-3.5" strokeWidth={2} />
+        {rounded === 0 ? "No change" : `${rounded > 0 ? "+" : "−"}${Math.abs(rounded).toLocaleString("en-US")}%`}
       </span>
       <span className="text-ink-3">vs {period}</span>
     </p>

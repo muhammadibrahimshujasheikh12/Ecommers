@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Controller, FormProvider, useForm, useWatch, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select, Textarea } from "@/components/ui/field";
 import { useToast } from "@/components/providers/toast-provider";
-import { Panel, formatDateTime } from "@/features/admin/ui";
+import { Panel } from "@/features/admin/ui";
 import { cn } from "@/utils/cn";
 import { discountPercent, formatPrice } from "@/utils/format";
 import { checkProductSlugAction, saveProductAction } from "./actions";
@@ -85,7 +85,16 @@ function toFormValues(product: AdminProductDetail | null): ProductFormInput {
 type SlugCheck = { slug: string; available: boolean; usedBy: string | null };
 
 /** Create / edit form for a product with its variants, images and details. */
-export function ProductEditor({ product, options }: { product: AdminProductDetail | null; options: ProductFormOptions }) {
+export function ProductEditor({
+  product,
+  options,
+  aside,
+}: {
+  product: AdminProductDetail | null;
+  options: ProductFormOptions;
+  /** Server-rendered sidebar panels (e.g. performance), shown above the danger zone. */
+  aside?: ReactNode;
+}) {
   const router = useRouter();
   const toast = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -180,7 +189,7 @@ export function ProductEditor({ product, options }: { product: AdminProductDetai
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={onSubmit} noValidate aria-label={product ? `Edit ${product.name}` : "New product"} className="pb-28">
+      <form onSubmit={onSubmit} noValidate aria-label={product ? `Edit ${product.name}` : "New product"}>
         {serverError && (
           <div role="alert" className="mb-6 rounded-[3px] border border-[#e8cfc8] bg-blush px-5 py-4 text-[14px] text-sale">
             {serverError}
@@ -278,22 +287,6 @@ export function ProductEditor({ product, options }: { product: AdminProductDetai
               </div>
             </Panel>
 
-            <Panel title="Variants & inventory" description="Sizes and colours, each with its own SKU and stock. Leave the price override empty to use the product price.">
-              <VariantsEditor />
-            </Panel>
-
-            <Panel title="Specifications">
-              <div className="space-y-5">
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Textarea label="Material" rows={2} className="min-h-20" maxLength={300} error={errors.material?.message} {...register("material")} />
-                  <Textarea label="Care instructions" rows={2} className="min-h-20" maxLength={1000} error={errors.careInstructions?.message} {...register("careInstructions")} />
-                </div>
-                <fieldset>
-                  <legend className="mb-3 font-ui text-[13px] font-medium tracking-[0.04em] text-charcoal">Details</legend>
-                  <DetailsEditor />
-                </fieldset>
-              </div>
-            </Panel>
           </div>
 
           <div className="min-w-0 space-y-6">
@@ -395,41 +388,30 @@ export function ProductEditor({ product, options }: { product: AdminProductDetai
               </div>
             </Panel>
 
-            {product && (
-              <Panel title="Performance">
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-[14px]">
-                  <div>
-                    <dt className="text-[12px] text-ink-3">Units sold</dt>
-                    <dd className="mt-0.5 font-medium tabular-nums">{product.salesCount.toLocaleString("en-US")}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[12px] text-ink-3">Orders</dt>
-                    <dd className="mt-0.5 font-medium tabular-nums">
-                      {product.orderCount.toLocaleString("en-US")}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[12px] text-ink-3">Rating</dt>
-                    <dd className="mt-0.5 font-medium">
-                      {product.ratingCount ? `${product.ratingAvg.toFixed(1)} / 5 (${product.ratingCount})` : "No reviews"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[12px] text-ink-3">Created</dt>
-                    <dd className="mt-0.5">{formatDateTime(product.createdAt)}</dd>
-                  </div>
-                  {product.updatedAt && (
-                    <div className="col-span-2">
-                      <dt className="text-[12px] text-ink-3">Last updated</dt>
-                      <dd className="mt-0.5">{formatDateTime(product.updatedAt)}</dd>
-                    </div>
-                  )}
-                </dl>
-              </Panel>
-            )}
+            {aside}
 
             {product && <DangerZone product={product} dirty={isDirty} />}
           </div>
+        </div>
+
+        {/* Wide content gets the full width: the variants table needs the room. */}
+        <div className="mt-6 space-y-6">
+            <Panel title="Variants & inventory" description="Sizes and colours, each with its own SKU and stock. Leave the price override empty to use the product price.">
+              <VariantsEditor />
+            </Panel>
+
+            <Panel title="Specifications">
+              <div className="space-y-5">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Textarea label="Material" rows={2} className="min-h-20" maxLength={300} error={errors.material?.message} {...register("material")} />
+                  <Textarea label="Care instructions" rows={2} className="min-h-20" maxLength={1000} error={errors.careInstructions?.message} {...register("careInstructions")} />
+                </div>
+                <fieldset>
+                  <legend className="mb-3 font-ui text-[13px] font-medium tracking-[0.04em] text-charcoal">Details</legend>
+                  <DetailsEditor />
+                </fieldset>
+              </div>
+            </Panel>
         </div>
 
         <div className="sticky bottom-0 z-20 -mx-5 mt-8 border-t border-line bg-ivory/95 px-5 py-3.5 backdrop-blur md:-mx-8 md:px-8">

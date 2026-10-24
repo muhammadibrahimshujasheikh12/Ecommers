@@ -51,7 +51,7 @@ export default async function AdminOrderPage({ params }: Props) {
       />
 
       {/* Phones: status & payment first, then the order, then customer details. */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-[auto_1fr] lg:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-[auto_1fr] lg:items-start">
         <div className="space-y-6 lg:col-start-2 lg:row-start-1">
           <OrderStatusPanel order={order} restocksOnCancel={!DEMO_MODE} />
           <PaymentPanel order={order} />

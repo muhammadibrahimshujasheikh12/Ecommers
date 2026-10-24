@@ -1,4 +1,5 @@
 import { AdminBadge } from "@/features/admin/ui";
+import { cn } from "@/utils/cn";
 import type { OrderStatus, PaymentStatus } from "@/types/domain";
 import { statusLabel } from "@/utils/format";
 import { ORDER_STATUS_TONE, PAYMENT_STATUS_TONE } from "./status";
@@ -13,7 +14,8 @@ export function OrderStatusBadge({ status, className }: { status: OrderStatus; c
 
 export function PaymentStatusBadge({ status, className }: { status: PaymentStatus; className?: string }) {
   return (
-    <AdminBadge tone={PAYMENT_STATUS_TONE[status] ?? "neutral"} className={className}>
+    // relative: keeps the visually hidden text inside a scrolling table's clip box.
+    <AdminBadge tone={PAYMENT_STATUS_TONE[status] ?? "neutral"} className={cn("relative", className)}>
       <span className="sr-only">Payment </span>
       {statusLabel(status)}
     </AdminBadge>

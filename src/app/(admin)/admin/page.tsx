@@ -47,19 +47,19 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
             order exclude cancelled, returned and refunded orders.
           </p>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <Panel title="Revenue by day" description={`${rangeLabel} · ${formatPrice(data.current.revenue)} in total`}>
               <RevenueChart key={days} days={data.daily} rangeLabel={rangeLabel} />
             </Panel>
             <StatusBreakdown byStatus={data.byStatus} range={data.range} />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <RecentOrders orders={data.recentOrders} />
             <AttentionPanel openOrders={data.openOrders} pendingReviews={data.pendingReviews} lowStockCount={data.lowStockCount} />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
             <TopProducts
               products={top === "units" ? data.topByUnits : data.topByRevenue}
               by={top}

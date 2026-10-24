@@ -175,16 +175,16 @@ export function VariantsEditor() {
             </div>
           </div>
 
-          <Table label="Variants" className="min-w-[920px]">
+          <Table label="Variants" className="relative min-w-[1010px]">
             <thead>
               <tr>
-                <Th className="w-10">#</Th>
+                <Th className="w-10 pr-2">#</Th>
                 <Th>Colour</Th>
-                <Th className="w-32">Hex</Th>
-                <Th className="w-32">Size</Th>
+                <Th>Hex</Th>
+                <Th>Size</Th>
                 <Th>SKU</Th>
-                <Th className="w-36">Price override</Th>
-                <Th className="w-40">Stock</Th>
+                <Th>Price override</Th>
+                <Th>Stock</Th>
                 <Th className="w-14">
                   <span className="sr-only">Remove</span>
                 </Th>
@@ -200,7 +200,7 @@ export function VariantsEditor() {
                 const id = (name: string) => `variant-${i}-${name}`;
                 return (
                   <tr key={field.key} className="align-top">
-                    <Td className="pt-5 text-[12px] tabular-nums text-ink-3">{i + 1}</Td>
+                    <Td className="pr-2 pt-5 text-[12px] tabular-nums text-ink-3">{i + 1}</Td>
                     <Td>
                       <div className="flex items-center gap-2">
                         <span
@@ -220,7 +220,7 @@ export function VariantsEditor() {
                           placeholder="e.g. Mint"
                           aria-invalid={err?.color ? true : undefined}
                           aria-describedby={err?.color ? id("color-error") : undefined}
-                          className={cellInputClasses(Boolean(err?.color), "min-w-[140px]")}
+                          className={cellInputClasses(Boolean(err?.color), "min-w-[130px]")}
                           {...register(`variants.${i}.color`)}
                         />
                       </div>
@@ -232,7 +232,7 @@ export function VariantsEditor() {
                         placeholder="#C9D8CC"
                         aria-invalid={err?.colorHex ? true : undefined}
                         aria-describedby={err?.colorHex ? id("hex-error") : undefined}
-                        className={cellInputClasses(Boolean(err?.colorHex), "uppercase")}
+                        className={cellInputClasses(Boolean(err?.colorHex), "min-w-[104px] uppercase")}
                         {...register(`variants.${i}.colorHex`)}
                       />
                       <CellError id={id("hex-error")} message={err?.colorHex?.message} />
@@ -244,7 +244,7 @@ export function VariantsEditor() {
                         placeholder="e.g. M"
                         aria-invalid={err?.size ? true : undefined}
                         aria-describedby={err?.size ? id("size-error") : undefined}
-                        className={cellInputClasses(Boolean(err?.size))}
+                        className={cellInputClasses(Boolean(err?.size), "min-w-[84px]")}
                         {...register(`variants.${i}.size`)}
                       />
                       <CellError id={id("size-error")} message={err?.size?.message} />
@@ -254,7 +254,7 @@ export function VariantsEditor() {
                         aria-label={`SKU, variant ${i + 1}`}
                         aria-invalid={err?.sku ? true : undefined}
                         aria-describedby={err?.sku ? id("sku-error") : undefined}
-                        className={cellInputClasses(Boolean(err?.sku), "min-w-[170px] uppercase")}
+                        className={cellInputClasses(Boolean(err?.sku), "min-w-[160px] uppercase")}
                         {...register(`variants.${i}.sku`)}
                       />
                       <CellError id={id("sku-error")} message={err?.sku?.message} />
@@ -266,19 +266,19 @@ export function VariantsEditor() {
                         placeholder={Number.isFinite(basePriceNumber) && basePriceNumber > 0 ? formatPrice(basePriceNumber) : "Same as product"}
                         aria-invalid={err?.price ? true : undefined}
                         aria-describedby={err?.price ? id("price-error") : undefined}
-                        className={cellInputClasses(Boolean(err?.price))}
+                        className={cellInputClasses(Boolean(err?.price), "min-w-[112px]")}
                         {...register(`variants.${i}.price`)}
                       />
                       <CellError id={id("price-error")} message={err?.price?.message} />
                     </Td>
                     <Td>
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-[136px] items-center gap-2">
                         <input
                           aria-label={`Stock, variant ${i + 1}`}
                           inputMode="numeric"
                           aria-invalid={err?.stock ? true : undefined}
                           aria-describedby={err?.stock ? id("stock-error") : undefined}
-                          className={cellInputClasses(Boolean(err?.stock), "w-20 tabular-nums")}
+                          className={cellInputClasses(Boolean(err?.stock), "max-w-20 tabular-nums")}
                           {...register(`variants.${i}.stock`)}
                         />
                         {!err?.stock && stock === 0 && <AdminBadge tone="danger">Out</AdminBadge>}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { ExternalLink, Pencil, Star } from "lucide-react";
+import { ExternalLink, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/providers/toast-provider";
 import { Table, Td, Th } from "@/features/admin/ui";
@@ -143,7 +143,7 @@ export function ProductsTable({ rows }: { rows: AdminProductRow[] }) {
         </div>
       )}
 
-      <Table label="Products" className="min-w-[1040px]">
+      <Table label="Products" className="relative min-w-[940px]">
         <thead>
           <tr>
             <Th className="w-12">
@@ -165,9 +165,6 @@ export function ProductsTable({ rows }: { rows: AdminProductRow[] }) {
             <Th align="right">Stock</Th>
             <Th>Status</Th>
             <Th align="center">Featured</Th>
-            <Th align="right">
-              <span className="sr-only">Actions</span>
-            </Th>
           </tr>
         </thead>
         <tbody>
@@ -183,13 +180,28 @@ export function ProductsTable({ rows }: { rows: AdminProductRow[] }) {
                 />
               </Td>
               <Td>
-                <Link href={`/admin/products/${row.id}`} className="group flex min-w-[220px] items-center gap-3.5">
+                <div className="flex min-w-[220px] items-center gap-3.5">
                   <ProductThumb url={row.image?.url} alt="" className="w-11" />
-                  <span className="min-w-0">
-                    <span className="block font-medium text-charcoal group-hover:underline group-hover:underline-offset-4">{row.name}</span>
-                    <span className="block truncate text-[12px] text-ink-3">/{row.slug}</span>
-                  </span>
-                </Link>
+                  <div className="min-w-0">
+                    <Link href={`/admin/products/${row.id}`} className="block font-medium text-charcoal hover:underline hover:underline-offset-4">
+                      {row.name}
+                    </Link>
+                    {row.status === "active" ? (
+                      <a
+                        href={`/product/${row.slug}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex max-w-full items-center gap-1 text-[12px] text-ink-3 hover:text-charcoal"
+                      >
+                        <span className="truncate">/{row.slug}</span>
+                        <ExternalLink aria-hidden className="size-3 shrink-0" strokeWidth={1.6} />
+                        <span className="sr-only">(view in the store, opens in a new tab)</span>
+                      </a>
+                    ) : (
+                      <span className="block truncate text-[12px] text-ink-3">/{row.slug}</span>
+                    )}
+                  </div>
+                </div>
               </Td>
               <Td className="whitespace-nowrap text-[13px] tabular-nums text-ink-2">{row.sku}</Td>
               <Td className="text-ink-2">{row.category?.name ?? <span className="text-ink-3">—</span>}</Td>
@@ -245,28 +257,6 @@ export function ProductsTable({ rows }: { rows: AdminProductRow[] }) {
                 >
                   <Star aria-hidden className={cn("size-[18px]", row.featured ? "fill-charcoal text-charcoal" : "text-ink-3")} strokeWidth={1.5} />
                 </button>
-              </Td>
-              <Td align="right">
-                <div className="flex items-center justify-end gap-1">
-                  {row.status === "active" && (
-                    <a
-                      href={`/product/${row.slug}`}
-                      target="_blank"
-                      rel="noopener"
-                      className="grid size-10 place-items-center rounded-full text-ink-2 hover:bg-cream hover:text-charcoal"
-                    >
-                      <ExternalLink aria-hidden className="size-4" strokeWidth={1.5} />
-                      <span className="sr-only">View {row.name} in the store (opens in a new tab)</span>
-                    </a>
-                  )}
-                  <Link
-                    href={`/admin/products/${row.id}`}
-                    className="grid size-10 place-items-center rounded-full text-ink-2 hover:bg-cream hover:text-charcoal"
-                  >
-                    <Pencil aria-hidden className="size-4" strokeWidth={1.5} />
-                    <span className="sr-only">Edit {row.name}</span>
-                  </Link>
-                </div>
               </Td>
             </tr>
           ))}

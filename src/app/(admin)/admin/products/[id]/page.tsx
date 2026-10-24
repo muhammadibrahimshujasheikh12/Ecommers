@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/features/admin/ui";
+import { ProductPerformance } from "@/features/admin/products/performance";
 import { ProductEditor } from "@/features/admin/products/product-editor";
 import { StatusBadge, StockBadge } from "@/features/admin/products/badges";
 import { productIdSchema } from "@/features/admin/products/schema";
@@ -45,7 +46,12 @@ export default async function EditProductPage({ params }: { params: Params }) {
         }
       />
       {/* Remount after each save so the form starts from the saved rows (new variant ids, normalised values). */}
-      <ProductEditor key={`${product.id}:${product.updatedAt ?? ""}`} product={product} options={options} />
+      <ProductEditor
+        key={`${product.id}:${product.updatedAt ?? ""}`}
+        product={product}
+        options={options}
+        aside={<ProductPerformance product={product} />}
+      />
     </>
   );
 }

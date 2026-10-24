@@ -127,7 +127,7 @@ export function OrderStatusForm({
         <input type="hidden" {...register("orderId")} />
         <input type="hidden" {...register("expected")} />
         <div>
-          <Select label="Move to" required error={errors.status?.message} {...register("status")}>
+          <Select label="Move to" required defaultValue="" error={errors.status?.message} {...register("status")}>
             <option value="" disabled>
               Choose the next status…
             </option>
@@ -222,7 +222,7 @@ export function OrderPaymentForm({
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         <input type="hidden" {...register("orderId")} />
         <input type="hidden" {...register("expected")} />
-        <Select label="Payment status" error={errors.paymentStatus?.message} {...register("paymentStatus")}>
+        <Select label="Payment status" defaultValue={current} error={errors.paymentStatus?.message} {...register("paymentStatus")}>
           {options.map((s) => (
             <option key={s} value={s}>
               {s === current ? `${statusLabel(s)} (current)` : statusLabel(s)}
@@ -234,6 +234,7 @@ export function OrderPaymentForm({
           autoComplete="off"
           maxLength={REFERENCE_MAX}
           placeholder="e.g. bank transfer ID or receipt no."
+          defaultValue={reference ?? ""}
           hint="Optional. Removing it clears the saved reference."
           error={errors.reference?.message}
           {...register("reference")}
