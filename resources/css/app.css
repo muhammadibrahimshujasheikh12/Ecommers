@@ -1,0 +1,78 @@
+/*
+ * Closet Stories stylesheet (Tailwind v4, CSS-first config).
+ * Shared by the storefront and admin layouts; built by Vite.
+ */
+@import 'tailwindcss';
+
+/* Extra places Tailwind scans for class names (pagination views, compiled Blade). */
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/* Closet Stories palette and type, carried over from the previous site. */
+@theme {
+    --color-ivory: #fbf8f3;
+    --color-cream: #f5efe6;
+    --color-beige: #efe6d8;
+    --color-sand: #e9ddcb;
+    --color-blush: #f3e3dd;
+    --color-rose: #d8b4ab;
+    --color-charcoal: #2a2826;
+    --color-charcoal-soft: #45403b;
+    --color-ink-2: #57524c;
+    --color-ink-3: #736c64;
+    --color-line: #e6ddd0;
+    --color-line-strong: #cfc4b5;
+    --color-sale: #9a4438;
+    --color-success: #4f6b4a;
+
+    --font-display: 'Bodoni Moda', 'Didot', Georgia, serif;
+    --font-ui: 'Jost', 'Futura', ui-sans-serif, sans-serif;
+    --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+    body {
+        @apply bg-ivory font-sans text-charcoal antialiased;
+    }
+    h1, h2, h3 {
+        @apply font-display;
+    }
+}
+
+/* Reusable building blocks used across Blade views. */
+@layer components {
+    /* Buttons: solid (primary) and outlined (secondary). */
+    .btn {
+        @apply inline-flex min-h-12 items-center justify-center gap-2 bg-charcoal px-8 font-ui text-[13px] font-medium uppercase tracking-[0.16em] text-ivory transition hover:bg-charcoal-soft disabled:opacity-50;
+    }
+    .btn-outline {
+        @apply inline-flex min-h-12 items-center justify-center gap-2 border border-charcoal px-8 font-ui text-[13px] font-medium uppercase tracking-[0.16em] transition hover:bg-charcoal hover:text-ivory;
+    }
+    /* Small uppercase label above headings. */
+    .eyebrow {
+        @apply font-ui text-[12px] font-medium uppercase tracking-[0.2em] text-ink-3;
+    }
+    /* Form controls: input/select styling, label and validation message. */
+    .field {
+        @apply block w-full border border-line-strong bg-white px-4 py-3 text-[15px] outline-none focus:border-charcoal;
+    }
+    .label {
+        @apply mb-1.5 block font-ui text-[13px] font-medium;
+    }
+    .error {
+        @apply mt-1 text-[13px] text-sale;
+    }
+    /* Long-form content pages (policies, FAQ) rendered from HTML. */
+    .prose-page h2 {
+        @apply mt-10 mb-3 text-2xl;
+    }
+    .prose-page p, .prose-page ul, .prose-page ol {
+        @apply mb-4 leading-relaxed text-ink-2;
+    }
+    .prose-page ul { @apply list-disc pl-5; }
+    .prose-page ol { @apply list-decimal pl-5; }
+    .prose-page a { @apply underline underline-offset-2; }
+    .prose-page table { @apply mb-6 w-full border-collapse text-[14px]; }
+    .prose-page th, .prose-page td { @apply border border-line px-3 py-2 text-left; }
+    .prose-page th { @apply bg-cream font-ui; }
+}
